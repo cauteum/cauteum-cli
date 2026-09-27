@@ -9,12 +9,10 @@ project_name: whaleshell
 
 before:
   hooks:
-    # Layout under build/helpers/<arch>/ already matches the archive paths
-    # (libexec/whaleshell/linux-<arch>/…); src glob keeps that relative tree.
-    # Do not set dst — GoReleaser's archive dst is not reliably templated, and
-    # a flat dst drops the linux-<arch> directory.
-    - bash scripts/build-linux-helpers.sh {{ .Version }} build/helpers/amd64/libexec/whaleshell amd64
-    - bash scripts/build-linux-helpers.sh {{ .Version }} build/helpers/arm64/libexec/whaleshell arm64
+    # Build both linux helper arches once. Archive `dst` is NOT templated by
+    # GoReleaser, so every archive ships linux-amd64 + linux-arm64 under
+    # libexec/whaleshell/ (install.sh / sandboxes pick the needed arch).
+    - bash scripts/build-linux-helpers.sh {{ .Version }} build/helpers/libexec/whaleshell amd64 arm64
 
 builds:
   - id: whaleshell
@@ -63,12 +61,14 @@ archives:
       - LICENSE*
       - README*
       - install.sh
-      # Docker Desktop VMs match the host arch, so each archive carries the
-      # linux helpers for its own arch (windows/amd64 → linux-amd64).
-      # Place binaries under libexec/… via dst+strip_parent (basename only),
-      # otherwise GoReleaser keeps the build/helpers/<arch>/ prefix.
-      - src: "build/helpers/{{ .Arch }}/libexec/whaleshell/linux-{{ .Arch }}/*"
-        dst: "libexec/whaleshell/linux-{{ .Arch }}"
+      # Literal dst (no {{ .Arch }} — GoReleaser does not expand templates in dst).
+      - src: build/helpers/libexec/whaleshell/linux-amd64/*
+        dst: libexec/whaleshell/linux-amd64
+        strip_parent: true
+        info:
+          mode: 0755
+      - src: build/helpers/libexec/whaleshell/linux-arm64/*
+        dst: libexec/whaleshell/linux-arm64
         strip_parent: true
         info:
           mode: 0755
