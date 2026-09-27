@@ -9,10 +9,12 @@ project_name: whaleshell
 
 before:
   hooks:
-    # linux helpers bundled in every CLI archive (libexec/whaleshell/linux-<arch>/)
-    # → build/helpers/<arch>/linux-<arch>/…
-    - bash scripts/build-linux-helpers.sh {{ .Version }} build/helpers/amd64 amd64
-    - bash scripts/build-linux-helpers.sh {{ .Version }} build/helpers/arm64 arm64
+    # Layout under build/helpers/<arch>/ already matches the archive paths
+    # (libexec/whaleshell/linux-<arch>/…); src glob keeps that relative tree.
+    # Do not set dst — GoReleaser's archive dst is not reliably templated, and
+    # a flat dst drops the linux-<arch> directory.
+    - bash scripts/build-linux-helpers.sh {{ .Version }} build/helpers/amd64/libexec/whaleshell amd64
+    - bash scripts/build-linux-helpers.sh {{ .Version }} build/helpers/arm64/libexec/whaleshell arm64
 
 builds:
   - id: whaleshell
@@ -62,11 +64,10 @@ archives:
       - README*
       - install.sh
       # Docker Desktop VMs match the host arch, so each archive carries the
-      # linux helpers for its own arch (windows/amd64 → linux-amd64). dst is
-      # not templated; the arch comes from the path kept relative to
-      # build/helpers/<arch>/.
+      # linux helpers for its own arch (windows/amd64 → linux-amd64).
+      # No dst: path relative to build/helpers/<arch>/ is preserved
+      # (libexec/whaleshell/linux-<arch>/…).
       - src: "build/helpers/{{ .Arch }}/**/*"
-        dst: "libexec/whaleshell"
         info:
           mode: 0755
 
