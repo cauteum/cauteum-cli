@@ -147,6 +147,14 @@ func IncludeLine(managedPath string) string {
 	return "Include " + Quote(managedPath)
 }
 
+// unquote reverses Quote for a double-quoted ssh_config argument.
+func unquote(s string) string {
+	if len(s) < 2 || s[0] != '"' || s[len(s)-1] != '"' {
+		return s
+	}
+	return strings.NewReplacer(`\`, `\`, `"`, `"`).Replace(s[1 : len(s)-1])
+}
+
 // EnsureInclude inserts the Include line before the first Host/Match block
 // (an Include inside a Host block would be scoped to that host). No-op when
 // an Include for managedPath already exists.
@@ -155,7 +163,7 @@ func EnsureInclude(content, managedPath string) string {
 		f := strings.Fields(l)
 		if len(f) >= 2 && strings.EqualFold(f[0], "include") {
 			rest := strings.TrimSpace(strings.TrimSpace(l)[len(f[0]):])
-			if strings.Trim(rest, `"`) == managedPath {
+			if rest == Quote(managedPath) || unquote(rest) == managedPath {
 				return content
 			}
 			for _, p := range f[1:] {

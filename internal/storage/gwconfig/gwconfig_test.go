@@ -3,6 +3,7 @@ package gwconfig
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 )
 
@@ -28,7 +29,7 @@ func TestSaveOwnerOnly(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if st.Mode().Perm() != 0o600 {
+	if runtime.GOOS != "windows" && st.Mode().Perm() != 0o600 {
 		t.Fatalf("config with tokens has mode %o, want 600", st.Mode().Perm())
 	}
 	entries, _ := os.ReadDir(filepath.Dir(p))

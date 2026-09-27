@@ -3,6 +3,7 @@ package sshconfig
 import (
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -125,7 +126,7 @@ func TestInstallWritesPrivateFiles(t *testing.T) {
 		t.Fatalf("user config:\n%s", u)
 	}
 	fi, _ := os.Stat(p.Managed)
-	if fi.Mode().Perm() != 0o600 {
+	if runtime.GOOS != "windows" && fi.Mode().Perm() != 0o600 {
 		t.Fatalf("managed mode %o", fi.Mode().Perm())
 	}
 	if err := Uninstall(p, "whaleshell-demo"); err != nil {
@@ -134,5 +135,16 @@ func TestInstallWritesPrivateFiles(t *testing.T) {
 	m, _ = os.ReadFile(p.Managed)
 	if strings.Contains(string(m), "whaleshell-demo") {
 		t.Fatalf("uninstall left block:\n%s", m)
+	}
+}
+
+func TestEnsureIncludeWindowsPathIdempotent(t *testing.T) {
+	managed := `C:\Users\RUNNER~1\AppData\Local\whaleshell\ssh_config`
+	once := EnsureInclude("Host box\n    User me\n", managed)
+	if !strings.Contains(once, `Include "C:\\Users\\RUNNER~1`) {
+		t.Fatalf("backslashes must be escaped inside quotes:\n%s", once)
+	}
+	if twice := EnsureInclude(once, managed); twice != once {
+		t.Fatalf("second EnsureInclude changed content:\n%s", twice)
 	}
 }

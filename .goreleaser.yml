@@ -43,6 +43,8 @@ archives:
     # whaleshell-gateway rides along (linux/darwin) so `gateway ensure` works
     # from a plain install.sh setup.
     builds: [whaleshell, whaleshell-gateway]
+    # windows has no gateway build
+    allow_different_binary_count: true
     name_template: >-
       {{ .ProjectName }}_
       {{- title .Os }}_
