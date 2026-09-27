@@ -60,7 +60,7 @@ func Save(t Template) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(p, b, 0o644)
+	return os.WriteFile(p, b, 0o600)
 }
 
 // Get loads a template by name.

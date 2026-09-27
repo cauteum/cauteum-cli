@@ -188,7 +188,8 @@ func printSecretsKEK(info map[string]any) {
 	}
 	src, _ := raw["source"].(string)
 	pinned, _ := raw["pinned"].(bool)
-	fmt.Printf("  secrets_kek:      source=%s pinned=%v\n", src, pinned)
+	format, _ := raw["format"].(string)
+	fmt.Printf("  secrets_kek:      source=%s pinned=%v format=%s\n", src, pinned, format)
 	if w, _ := raw["warning"].(string); strings.TrimSpace(w) != "" {
 		fmt.Printf("  secrets_kek.warn: %s\n", w)
 	}
@@ -214,7 +215,11 @@ func (a *App) Doctor() error {
 		if pinned, _ := raw["pinned"].(bool); !pinned {
 			fmt.Fprintf(os.Stderr, "doctor: warn: pin %s in compose/env so secrets survive volume loss\n", secrets.EnvKEK)
 		}
+		if needed, _ := raw["migration_needed"].(bool); needed {
+			fmt.Fprintln(os.Stderr, "doctor: warn: legacy secrets store needs migration; back up the data dir and restart gateway")
+		}
 	}
+	fmt.Fprintln(os.Stderr, "doctor: note: binary-scoped egress rules deny callers whose executable cannot be verified; Docker Desktop sidecar TCP usually cannot provide this identity")
 	providers, err := cli.ListProviders(ctx)
 	if err != nil {
 		return fmt.Errorf("doctor: list providers: %w", err)

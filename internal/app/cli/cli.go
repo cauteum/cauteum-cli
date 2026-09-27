@@ -659,7 +659,21 @@ func runRule(a *service.App, args []string) error {
 		_ = reason
 		return a.RuleApprove(id)
 	case "approve-all":
-		return a.RuleClear()
+		sandbox := ""
+		includeSecurityFlagged := false
+		for _, arg := range args[1:] {
+			switch {
+			case arg == "--include-security-flagged":
+				includeSecurityFlagged = true
+			case strings.HasPrefix(arg, "-"):
+				return fmt.Errorf("unknown flag %q", arg)
+			case sandbox == "":
+				sandbox = arg
+			default:
+				return fmt.Errorf("usage: whaleshell rule approve-all [NAME] [--include-security-flagged]")
+			}
+		}
+		return a.RuleApproveAll(sandbox, includeSecurityFlagged)
 	case "reject":
 		id, reason, err := parseRuleAction(args[1:])
 		if err != nil {

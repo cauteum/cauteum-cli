@@ -26,10 +26,10 @@ type Context struct {
 // Env: OPENSHELL_GATEWAY (name or URL), WHALESHELL_GATEWAY_URL, OPENSHELL_WORKSPACE, WHALESHELL_WORKSPACE.
 func Parse(args []string) (Context, []string) {
 	ctx := Context{
-		Workspace: firstNonEmpty(os.Getenv("OPENSHELL_WORKSPACE"), os.Getenv("WHALESHELL_WORKSPACE"), "default"),
+		Workspace: firstNonEmpty(os.Getenv("WHALESHELL_WORKSPACE"), os.Getenv("OPENSHELL_WORKSPACE"), "default"),
 		Output:    "text",
 	}
-	if v := firstNonEmpty(os.Getenv("OPENSHELL_GATEWAY"), os.Getenv("WHALESHELL_GATEWAY_URL")); v != "" {
+	if v := firstNonEmpty(os.Getenv("WHALESHELL_GATEWAY_URL"), os.Getenv("OPENSHELL_GATEWAY")); v != "" {
 		if looksLikeURL(v) {
 			ctx.GatewayURL = v
 		} else {

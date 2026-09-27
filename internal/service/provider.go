@@ -271,11 +271,11 @@ func (a *App) prepareProviders(base policy.Document, basePath string, names []st
 		dir = os.TempDir()
 	}
 	outDir := filepath.Join(dir, "whaleshell", "composed-policy")
-	if err := os.MkdirAll(outDir, 0o755); err != nil {
+	if err := os.MkdirAll(outDir, 0o700); err != nil {
 		return nil, base, basePath, err
 	}
 	out := filepath.Join(outDir, fmt.Sprintf("%d.yaml", time.Now().UnixNano()))
-	if err := os.WriteFile(out, b, 0o644); err != nil {
+	if err := os.WriteFile(out, b, 0o600); err != nil {
 		return nil, base, basePath, err
 	}
 	return attached, doc, out, nil

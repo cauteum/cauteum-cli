@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,6 +13,8 @@ import (
 	"github.com/whaleshell/whaleshell-core/defaults"
 	"github.com/whaleshell/whaleshell-sdk/go/whaleshell"
 )
+
+var errNoCurrentGateway = errors.New("no current gateway; run: whaleshell gateway add|select")
 
 // ApplyGlobal stores OpenShell-style global flags for this CLI session.
 func (a *App) ApplyGlobal(g global.Context) {
@@ -66,7 +69,7 @@ func (a *App) currentGatewayURL() (string, error) {
 	}
 	u := gwconfig.CurrentURL(cfg)
 	if u == "" {
-		return "", fmt.Errorf("no current gateway; run: whaleshell gateway add|select")
+		return "", errNoCurrentGateway
 	}
 	return strings.TrimRight(u, "/"), nil
 }
