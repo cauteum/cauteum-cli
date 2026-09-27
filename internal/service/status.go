@@ -12,10 +12,11 @@ import (
 
 // StatusSnapshot is structured status for -o json|yaml.
 type StatusSnapshot struct {
-	Status         string `json:"status"`
-	Authentication string `json:"authentication"`
-	Gateway        string `json:"gateway"`
-	Version        string `json:"version,omitempty"`
+	Status               string `json:"status"`
+	Authentication       string `json:"authentication"`
+	Gateway              string `json:"gateway"`
+	Version              string `json:"version,omitempty"`
+	AllowUnauthenticated bool   `json:"allow_unauthenticated,omitempty"`
 }
 
 // Status prints gateway reachability and auth (OpenShell status).
@@ -37,6 +38,7 @@ func (a *App) Status() error {
 		out.Status = "Connected"
 	}
 	if info, err := cli.Info(ctx); err == nil {
+		out.AllowUnauthenticated, _ = info["allow_unauthenticated"].(bool)
 		if v, ok := info["version"].(string); ok {
 			out.Version = v
 		}
@@ -90,6 +92,9 @@ func (a *App) emitStatus(s StatusSnapshot) error {
 		}
 		if s.Version != "" {
 			_, err = fmt.Fprintf(w, "Version: %s\n", s.Version)
+		}
+		if err == nil && s.AllowUnauthenticated {
+			_, err = fmt.Fprintln(w, "WARNING: gateway allows unauthenticated local requests")
 		}
 		return err
 	}, s)

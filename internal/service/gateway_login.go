@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"os/exec"
-	"runtime"
 	"strings"
 	"time"
 
@@ -126,7 +124,7 @@ func fetchOIDCMeta(gatewayURL string) (oidcMeta, error) {
 	if err != nil {
 		return oidcMeta{}, err
 	}
-	res, err := http.DefaultClient.Do(req)
+	res, err := (&http.Client{Timeout: 15 * time.Second}).Do(req)
 	if err != nil {
 		return oidcMeta{}, err
 	}
@@ -194,17 +192,5 @@ func (a *App) gatewayLoginBrowserLocal(gatewayURL string) (string, error) {
 }
 
 func openBrowser(u string) error {
-	if err := display.OpenHostBrowser(u); err == nil {
-		return nil
-	}
-	switch runtime.GOOS {
-	case "darwin":
-		return exec.Command("open", u).Start()
-	case "linux":
-		return exec.Command("xdg-open", u).Start()
-	case "windows":
-		return exec.Command("rundll32", "url.dll,FileProtocolHandler", u).Start()
-	default:
-		return fmt.Errorf("unsupported platform")
-	}
+	return display.OpenHostBrowser(u)
 }

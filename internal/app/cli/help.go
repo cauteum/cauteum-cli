@@ -254,6 +254,6 @@ Usage:
 	"rule": `whaleshell rule — approval rules (MVP)
 
 Usage:
-  whaleshell rule get|approve|reject|history|clear …
+  whaleshell rule get|approve|approve-all|reject|history|clear …
 `,
 }

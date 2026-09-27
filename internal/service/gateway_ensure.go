@@ -55,7 +55,7 @@ func (a *App) GatewayEnsure() error {
 		log.Error("failed to resolve gateway log path", slogx.Err(err))
 		return err
 	}
-	logF, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+	logF, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600)
 	if err != nil {
 		log.Error("failed to open gateway log", slogx.Err(err))
 		return fmt.Errorf("gateway ensure: log: %w", err)
