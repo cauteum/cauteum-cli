@@ -65,9 +65,10 @@ archives:
       - install.sh
       # Docker Desktop VMs match the host arch, so each archive carries the
       # linux helpers for its own arch (windows/amd64 → linux-amd64).
-      # No dst: path relative to build/helpers/<arch>/ is preserved
-      # (libexec/whaleshell/linux-<arch>/…).
+      # strip_parent drops build/helpers/<arch>/ so the archive root gets
+      # libexec/whaleshell/linux-<arch>/… (required by install.sh + CI).
       - src: "build/helpers/{{ .Arch }}/**/*"
+        strip_parent: true
         info:
           mode: 0755
 

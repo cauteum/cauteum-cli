@@ -12,3 +12,7 @@
 
 - Prefer `WHALESHELL_*` env over legacy `OPENSHELL_*` when both are set.
 - Doctor warns on KEK migration need and binary-scoped identity limits on Docker Desktop.
+
+### Fixed
+
+- GoReleaser archive helpers use `strip_parent` so paths land at `libexec/whaleshell/linux-<arch>/`.
