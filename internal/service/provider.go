@@ -178,6 +178,9 @@ func (a *App) ProviderProfileLint(source string) error {
 		return err
 	}
 	for _, item := range profiles {
+		if err := item.profile.ValidateRuntime(); err != nil {
+			return err
+		}
 		fmt.Printf("profile %s: valid\n", item.profile.ID)
 	}
 	return nil
@@ -235,6 +238,9 @@ func (a *App) ProviderCreate(args providerflags.CreateArgs) error {
 	gwURL, _ := a.currentGatewayURL()
 	prof, err := a.loadProfile(args.Profile, gwURL)
 	if err != nil {
+		return err
+	}
+	if err := prof.ValidateRuntime(); err != nil {
 		return err
 	}
 	envVars := args.EnvVars
@@ -307,11 +313,97 @@ func (a *App) ProviderCreate(args providerflags.CreateArgs) error {
 		CredentialExpiresAtMS: args.CredentialExpiresAt,
 		Config:                args.Config,
 	}
+	rec.Refresh = profileRefreshConfig(prof, envVars)
 	if err := c.PutProvider(a.apiCtx(), rec); err != nil {
 		return err
 	}
 	fmt.Printf("provider %s type=%s env=%v (values stored encrypted on gateway; never printed)\n", args.Name, args.Profile, envVars)
 	return nil
+}
+
+// profileRefreshConfig carries supported OpenShell refresh metadata into the
+// gateway provider record. Secret values are resolved later from encrypted storage.
+func profileRefreshConfig(prof provider.Profile, selectedEnvKeys []string) map[string]whaleshell.ProviderRefreshConfig {
+	selected := make(map[string]struct{}, len(selectedEnvKeys))
+	for _, key := range selectedEnvKeys {
+		selected[strings.TrimSpace(key)] = struct{}{}
+	}
+	credentialEnvKey := func(name string) string {
+		for _, candidate := range prof.Credentials {
+			if candidate.Name != name {
+				continue
+			}
+			for _, key := range candidate.EnvVars {
+				key = strings.TrimSpace(key)
+				if _, ok := selected[key]; ok {
+					return key
+				}
+			}
+			if len(candidate.EnvVars) > 0 {
+				return strings.TrimSpace(candidate.EnvVars[0])
+			}
+		}
+		return ""
+	}
+	out := map[string]whaleshell.ProviderRefreshConfig{}
+	for _, credential := range prof.Credentials {
+		if credential.Refresh == nil {
+			continue
+		}
+		strategy := strings.TrimSpace(credential.Refresh.Strategy)
+		switch strategy {
+		case "oauth2_refresh_token":
+			strategy = "oauth2-refresh-token"
+		case "oauth2_client_credentials":
+			strategy = "oauth2-client-credentials"
+		}
+		if strategy != "oauth2-refresh-token" && strategy != "oauth2-client-credentials" {
+			continue // executor support is required before activating another strategy
+		}
+		primaryKey := ""
+		for _, candidate := range credential.EnvVars {
+			candidate = strings.TrimSpace(candidate)
+			if _, ok := selected[candidate]; ok {
+				primaryKey = candidate
+				break
+			}
+		}
+		if primaryKey == "" {
+			continue
+		}
+		cfg := whaleshell.ProviderRefreshConfig{
+			CredentialKey:        primaryKey,
+			Strategy:             strategy,
+			Material:             map[string]string{},
+			Outputs:              map[string]string{"access_token": primaryKey},
+			RefreshBeforeSeconds: credential.Refresh.RefreshBeforeSeconds,
+			MaxLifetimeSeconds:   credential.Refresh.MaxLifetimeSeconds,
+		}
+		if credential.Refresh.TokenURL != "" {
+			cfg.Material["token_url"] = credential.Refresh.TokenURL
+		}
+		if len(credential.Refresh.Scopes) > 0 {
+			cfg.Material["scope"] = strings.Join(credential.Refresh.Scopes, " ")
+		}
+		for _, material := range credential.Refresh.Material {
+			if key := credentialEnvKey(material.Name); key != "" {
+				if cfg.MaterialCredentialKeys == nil {
+					cfg.MaterialCredentialKeys = map[string]string{}
+				}
+				cfg.MaterialCredentialKeys[material.Name] = key
+			}
+		}
+		for _, output := range credential.Refresh.AdditionalOutputs {
+			if key := credentialEnvKey(output.Credential); key != "" {
+				cfg.Outputs[output.Output] = key
+			}
+		}
+		out[primaryKey] = cfg
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
 }
 
 func containsString(list []string, s string) bool {

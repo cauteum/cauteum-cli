@@ -84,6 +84,9 @@ func (a *App) ProviderRefresh(name string) error {
 		return err
 	}
 	rec.Credentials = creds
+	// Provider GET redacts refresh material. Preserve the gateway's encrypted
+	// refresh configuration by omitting it from this credential-only update.
+	rec.Refresh = nil
 	if putErr := c.PutProvider(a.apiCtx(), rec); putErr != nil {
 		return putErr
 	}
