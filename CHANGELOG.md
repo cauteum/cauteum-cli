@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- Import, validate, update, and resolve OpenShell-compatible provider profiles from local files or the gateway catalog.
+- Carry profile-declared OAuth2 refresh configuration and output-token mappings into gateway-managed providers.
+
 ## [v0.0.2-alpha.1] - 2026-09-28
 
 ### Security
