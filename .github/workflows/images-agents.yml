@@ -83,11 +83,11 @@ jobs:
             ./slogx
           )
           replace (
-            github.com/whaleshell/whaleshell-runtime v0.1.0-alpha.1 => ./whaleshell-runtime
-            github.com/whaleshell/whaleshell-core v0.1.0-alpha.1 => ./whaleshell-core
-            github.com/whaleshell/whaleshell-driver v0.1.0-alpha.1 => ./whaleshell-driver
-            github.com/whaleshell/whaleshell-proxy v0.1.0-alpha.1 => ./whaleshell-proxy
-            github.com/whaleshell/slogx v0.1.0-alpha.1 => ./slogx
+            github.com/whaleshell/whaleshell-runtime => ./whaleshell-runtime
+            github.com/whaleshell/whaleshell-core => ./whaleshell-core
+            github.com/whaleshell/whaleshell-driver => ./whaleshell-driver
+            github.com/whaleshell/whaleshell-proxy => ./whaleshell-proxy
+            github.com/whaleshell/slogx => ./slogx
           )
           EOF
           # strip leading spaces from heredoc body
