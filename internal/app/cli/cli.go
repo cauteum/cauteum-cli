@@ -36,7 +36,7 @@ func execute(a *service.App, args []string) error {
 	}
 	if len(args) == 0 {
 		fmt.Println(a.Banner())
-		fmt.Println("commands: sandbox|provider|policy|gateway|logs|term|status|doctor|whoami|workspace|forward|service|settings|inference|…")
+		fmt.Println("commands: sandbox|provider|profile|policy|gateway|logs|term|status|doctor|whoami|workspace|forward|service|settings|inference|…")
 		fmt.Println("run 'whaleshell --help' for full usage")
 		return nil
 	}
@@ -62,6 +62,8 @@ func execute(a *service.App, args []string) error {
 		return runLogs(a, args[1:])
 	case "provider":
 		return runProvider(a, args[1:])
+	case "profile":
+		return runProvider(a, append([]string{"profile"}, args[1:]...))
 	case "whoami":
 		return a.Whoami()
 	case "workspace", "ws":
@@ -156,46 +158,72 @@ func runProvider(a *service.App, args []string) error {
 	}
 	switch args[0] {
 	case "list-profiles":
-		return a.ProviderProfileList()
+		rest, scope, workspace, err := parseProfileScope(a, args[1:])
+		if err != nil {
+			return err
+		}
+		if len(rest) != 0 {
+			return fmt.Errorf("usage: whaleshell provider list-profiles [--workspace NAME|--global]")
+		}
+		return a.ProviderProfileList(scope, workspace)
 	case "profile":
 		if len(args) < 2 {
 			return fmt.Errorf("usage: whaleshell provider profile list|show|import|export|delete|lint …")
 		}
+		rest, scope, workspace, err := parseProfileScope(a, args[2:])
+		if err != nil {
+			return err
+		}
 		switch args[1] {
 		case "list", "ls":
-			return a.ProviderProfileList()
-		case "show", "export":
-			id, outFmt, err := parseProfileIO(args[2:], false)
+			if len(rest) != 0 {
+				return fmt.Errorf("usage: whaleshell profile list [--workspace NAME|--global]")
+			}
+			return a.ProviderProfileList(scope, workspace)
+		case "show", "describe", "export":
+			id, outFmt, err := parseProfileIO(rest, false)
 			if err != nil {
 				return err
 			}
 			if id == "" {
 				return fmt.Errorf("usage: whaleshell provider profile export <id> [-o yaml|json]")
 			}
-			return a.ProviderProfileShowFmt(id, outFmt)
-		case "import", "update":
-			path, _, err := parseProfileIO(args[2:], true)
+			return a.ProviderProfileShowFmt(id, outFmt, scope, workspace)
+		case "import":
+			path, _, err := parseProfileIO(rest, true)
 			if err != nil {
 				return err
 			}
 			if path == "" {
 				return fmt.Errorf("usage: whaleshell provider profile import -f <file.yaml>")
 			}
-			return a.ProviderProfileImport(path)
+			return a.ProviderProfileImport(path, scope, workspace)
+		case "update":
+			path, _, err := parseProfileIO(rest, true)
+			if err != nil {
+				return err
+			}
+			if path == "" {
+				return fmt.Errorf("usage: whaleshell provider profile update -f <file.yaml>")
+			}
+			return a.ProviderProfileUpdate(path, scope, workspace)
 		case "delete":
 			if len(args) < 3 {
 				return fmt.Errorf("usage: whaleshell provider profile delete <id>")
 			}
-			return a.ProviderProfileDelete(args[2])
+			if len(rest) != 1 {
+				return fmt.Errorf("usage: whaleshell profile delete <id> [--workspace NAME|--global]")
+			}
+			return a.ProviderProfileDelete(rest[0], scope, workspace)
 		case "lint":
-			path, _, err := parseProfileIO(args[2:], true)
+			path, _, err := parseProfileIO(rest, true)
 			if err != nil {
 				return err
 			}
 			if path == "" {
 				return fmt.Errorf("usage: whaleshell provider profile lint -f <file.yaml>")
 			}
-			return a.ProviderProfileShow(path)
+			return a.ProviderProfileLint(path)
 		default:
 			return fmt.Errorf("unknown profile subcommand %q", args[1])
 		}
@@ -304,6 +332,36 @@ func runProvider(a *service.App, args []string) error {
 	default:
 		return fmt.Errorf("unknown provider subcommand %q", args[0])
 	}
+}
+
+func parseProfileScope(a *service.App, args []string) (rest []string, scope, workspace string, err error) {
+	scope, workspace = "global", ""
+	if a != nil && a.GlobalWorkspace != "" && a.GlobalWorkspace != "default" {
+		scope, workspace = "workspace", a.GlobalWorkspace
+	}
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--global":
+			scope, workspace = "global", ""
+		case "--workspace":
+			i++
+			if i >= len(args) || strings.TrimSpace(args[i]) == "" {
+				return nil, "", "", fmt.Errorf("--workspace needs a name")
+			}
+			scope, workspace = "workspace", args[i]
+		default:
+			if strings.HasPrefix(args[i], "--workspace=") {
+				workspace = strings.TrimSpace(strings.TrimPrefix(args[i], "--workspace="))
+				if workspace == "" {
+					return nil, "", "", fmt.Errorf("--workspace needs a name")
+				}
+				scope = "workspace"
+				continue
+			}
+			rest = append(rest, args[i])
+		}
+	}
+	return rest, scope, workspace, nil
 }
 
 func runInstall(a *service.App, args []string) error {
@@ -1357,7 +1415,7 @@ func parseProfileIO(args []string, fileMode bool) (pathOrID, outFmt string, err 
 	outFmt = "yaml"
 	for i := 0; i < len(args); i++ {
 		switch args[i] {
-		case "-f", "--file":
+		case "-f", "--file", "--url", "--from":
 			i++
 			if i >= len(args) {
 				return "", "", fmt.Errorf("%s needs a path", args[i-1])

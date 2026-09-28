@@ -3,6 +3,8 @@ package service
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -19,28 +21,26 @@ import (
 )
 
 // ProviderProfileList lists builtin + custom profiles on the current gateway.
-func (a *App) ProviderProfileList() error {
+func (a *App) ProviderProfileList(scopeOptions ...string) error {
 	c, err := a.gatewayClient()
 	if err != nil {
 		return err
 	}
-	list, err := c.ListProfiles(a.apiCtx())
+	scope, workspace := a.profileScope(scopeOptions...)
+	list, err := c.ListProfilesScoped(a.apiCtx(), scope, workspace)
 	if err != nil {
 		return err
 	}
+	fmt.Println("NAME\tTYPE\tCATEGORY\tSOURCE\tSCOPE")
 	for _, p := range list {
-		fmt.Printf("%s\t%s\n", p.ID, p.Source)
+		fmt.Printf("%s\tprovider\t%s\t%s\t%s\n", p.ID, p.Category, p.Source, p.Scope)
 	}
 	return nil
 }
 
 // ProviderProfileImport uploads a profile YAML to the gateway.
-func (a *App) ProviderProfileImport(path string) error {
-	b, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-	p, err := provider.ParseYAML(b)
+func (a *App) ProviderProfileImport(path string, scopeOptions ...string) error {
+	profiles, err := readProfiles(path)
 	if err != nil {
 		return err
 	}
@@ -48,10 +48,138 @@ func (a *App) ProviderProfileImport(path string) error {
 	if err != nil {
 		return err
 	}
-	if err := c.PutProfile(a.apiCtx(), p.ID, b); err != nil {
+	scope, workspace := a.profileScope(scopeOptions...)
+	for _, item := range profiles {
+		if err := c.CreateProfileScoped(a.apiCtx(), item.profile.ID, item.data, scope, workspace); err != nil {
+			return err
+		}
+		fmt.Printf("imported profile %s\n", item.profile.ID)
+	}
+	return nil
+}
+
+type profileDocument struct {
+	profile provider.Profile
+	data    []byte
+}
+
+func readProfiles(source string) ([]profileDocument, error) {
+	if strings.HasPrefix(source, "https://") {
+		client := &http.Client{
+			Timeout: 15 * time.Second,
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				if req.URL.Scheme != "https" {
+					return fmt.Errorf("profile download redirect must use HTTPS")
+				}
+				if len(via) >= 5 {
+					return fmt.Errorf("profile download: too many redirects")
+				}
+				return nil
+			},
+		}
+		res, err := client.Get(source)
+		if err != nil {
+			return nil, err
+		}
+		defer res.Body.Close()
+		if res.StatusCode < 200 || res.StatusCode >= 300 {
+			return nil, fmt.Errorf("profile download: %s", res.Status)
+		}
+		b, err := io.ReadAll(io.LimitReader(res.Body, (1<<20)+1))
+		if err != nil {
+			return nil, err
+		}
+		if len(b) > 1<<20 {
+			return nil, fmt.Errorf("profile download exceeds 1 MiB limit")
+		}
+		p, err := provider.ParseYAML(b)
+		if err != nil {
+			return nil, err
+		}
+		return []profileDocument{{profile: p, data: b}}, nil
+	}
+	info, err := os.Stat(source)
+	if err != nil {
+		return nil, err
+	}
+	paths := []string{source}
+	if info.IsDir() {
+		entries, err := os.ReadDir(source)
+		if err != nil {
+			return nil, err
+		}
+		paths = nil
+		for _, entry := range entries {
+			if entry.IsDir() {
+				continue
+			}
+			if strings.HasSuffix(entry.Name(), ".yaml") || strings.HasSuffix(entry.Name(), ".yml") || strings.HasSuffix(entry.Name(), ".json") {
+				paths = append(paths, filepath.Join(source, entry.Name()))
+			}
+		}
+	}
+	if len(paths) == 0 {
+		return nil, fmt.Errorf("no YAML/JSON profiles found in %s", source)
+	}
+	out := make([]profileDocument, 0, len(paths))
+	ids := map[string]struct{}{}
+	for _, path := range paths {
+		b, err := os.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+		p, err := provider.ParseYAML(b)
+		if err != nil {
+			return nil, fmt.Errorf("%s: %w", path, err)
+		}
+		if _, exists := ids[p.ID]; exists {
+			return nil, fmt.Errorf("duplicate profile id %q in import source", p.ID)
+		}
+		ids[p.ID] = struct{}{}
+		out = append(out, profileDocument{profile: p, data: b})
+	}
+	return out, nil
+}
+
+// ProviderProfileUpdate replaces an imported profile already present on the gateway.
+func (a *App) ProviderProfileUpdate(path string, scopeOptions ...string) error {
+	items, err := readProfiles(path)
+	if err != nil {
 		return err
 	}
-	fmt.Printf("imported profile %s\n", p.ID)
+	c, err := a.gatewayClient()
+	if err != nil {
+		return err
+	}
+	scope, workspace := a.profileScope(scopeOptions...)
+	for _, item := range items {
+		_, source, _, err := c.GetProfileScoped(a.apiCtx(), item.profile.ID, scope, workspace)
+		if err != nil {
+			return fmt.Errorf("profile update %s: read current version: %w", item.profile.ID, err)
+		}
+		if source != "custom" {
+			return fmt.Errorf("profile update %s: profile is not imported on gateway", item.profile.ID)
+		}
+		if item.profile.ResourceVersion == 0 {
+			return fmt.Errorf("profile update %s: resource_version required; export the current profile and preserve its version", item.profile.ID)
+		}
+		if err := c.PutProfileScoped(a.apiCtx(), item.profile.ID, item.data, fmt.Sprint(item.profile.ResourceVersion), scope, workspace); err != nil {
+			return err
+		}
+		fmt.Printf("updated profile %s\n", item.profile.ID)
+	}
+	return nil
+}
+
+// ProviderProfileLint validates one or more local or HTTPS provider profiles.
+func (a *App) ProviderProfileLint(source string) error {
+	profiles, err := readProfiles(source)
+	if err != nil {
+		return err
+	}
+	for _, item := range profiles {
+		fmt.Printf("profile %s: valid\n", item.profile.ID)
+	}
 	return nil
 }
 
@@ -61,17 +189,23 @@ func (a *App) ProviderProfileShow(idOrPath string) error {
 }
 
 // ProviderProfileShowFmt prints a profile as yaml or json wrapper.
-func (a *App) ProviderProfileShowFmt(idOrPath, format string) error {
+func (a *App) ProviderProfileShowFmt(idOrPath, format string, scopeOptions ...string) error {
 	var b []byte
 	var err error
 	if strings.Contains(idOrPath, "/") || strings.HasSuffix(idOrPath, ".yaml") || strings.HasSuffix(idOrPath, ".yml") {
 		b, err = os.ReadFile(idOrPath)
 	} else {
-		dir := provider.FindBuiltinDir()
-		if dir == "" {
-			return fmt.Errorf("providers dir not found")
+		if c, clientErr := a.gatewayClient(); clientErr == nil {
+			scope, workspace := a.profileScope(scopeOptions...)
+			b, _, _, err = c.GetProfileScoped(a.apiCtx(), idOrPath, scope, workspace)
 		}
-		b, err = os.ReadFile(filepath.Join(dir, idOrPath+".yaml"))
+		if err != nil || len(b) == 0 {
+			dir := provider.FindBuiltinDir()
+			if dir == "" {
+				return fmt.Errorf("provider profile %q not found in gateway or local catalog", idOrPath)
+			}
+			b, err = os.ReadFile(filepath.Join(dir, idOrPath+".yaml"))
+		}
 	}
 	if err != nil {
 		return err
@@ -98,7 +232,8 @@ func (a *App) ProviderCreate(args providerflags.CreateArgs) error {
 	if credentials == nil {
 		credentials = map[string]string{}
 	}
-	prof, err := loadBuiltinProfile(args.Profile)
+	gwURL, _ := a.currentGatewayURL()
+	prof, err := a.loadProfile(args.Profile, gwURL)
 	if err != nil {
 		return err
 	}
@@ -161,9 +296,11 @@ func (a *App) ProviderCreate(args providerflags.CreateArgs) error {
 	if err != nil {
 		return err
 	}
+	_, workspace := a.profileScope()
 	rec := whaleshell.ProviderRecord{
 		Name:                  args.Name,
 		Type:                  args.Profile,
+		Workspace:             workspace,
 		EnvVars:               envVars,
 		Credentials:           credentials,
 		RuntimeCredentials:    args.RuntimeCredentials,
@@ -293,7 +430,11 @@ func (a *App) resolveProviderForCreate(name, gwURL string) (provider.Profile, []
 			if rec.Name != name {
 				continue
 			}
-			prof, err := loadBuiltinProfile(rec.Type)
+			_, selectedWorkspace := a.profileScope()
+			if rec.Workspace != "" && rec.Workspace != selectedWorkspace {
+				return provider.Profile{}, nil, "", fmt.Errorf("provider %q belongs to workspace %q", name, rec.Workspace)
+			}
+			prof, err := a.loadProfileInWorkspace(rec.Type, gwURL, selectedWorkspace)
 			if err != nil {
 				return provider.Profile{}, nil, "", fmt.Errorf("provider %q: profile type %q: %w", name, rec.Type, err)
 			}
@@ -312,7 +453,7 @@ func (a *App) resolveProviderForCreate(name, gwURL string) (provider.Profile, []
 		}
 	}
 	// Treat name as profile id: discover env and auto-create instance (e.g. --provider github).
-	prof, err := loadBuiltinProfile(name)
+	prof, err := a.loadProfile(name, gwURL)
 	if err != nil {
 		hint := ""
 		if gwURL != "" {
@@ -331,6 +472,7 @@ func (a *App) resolveProviderForCreate(name, gwURL string) (provider.Profile, []
 	}
 	if gwURL != "" {
 		c := a.clientFor(gwURL)
+		_, workspace := a.profileScope()
 		creds := map[string]string{}
 		for _, k := range keys {
 			if v, ok := os.LookupEnv(k); ok && strings.TrimSpace(v) != "" && !env.IsPlaceholder(v) {
@@ -338,7 +480,7 @@ func (a *App) resolveProviderForCreate(name, gwURL string) (provider.Profile, []
 			}
 		}
 		if err := c.PutProvider(a.apiCtx(), whaleshell.ProviderRecord{
-			Name: name, Type: prof.ID, EnvVars: keys, Credentials: creds,
+			Name: name, Type: prof.ID, Workspace: workspace, EnvVars: keys, Credentials: creds,
 		}); err != nil {
 			return provider.Profile{}, nil, "", fmt.Errorf("provider %q: register on gateway: %w", name, err)
 		}
@@ -368,6 +510,41 @@ func loadBuiltinProfile(idOrPath string) (provider.Profile, error) {
 	}
 	path := filepath.Join(dir, idOrPath+".yaml")
 	return provider.LoadFile(path)
+}
+
+// loadProfile resolves imported profiles from the selected gateway first, then
+// falls back to local builtin profiles for backward compatibility.
+func (a *App) loadProfile(id, gatewayURL string) (provider.Profile, error) {
+	_, workspace := a.profileScope()
+	return a.loadProfileInWorkspace(id, gatewayURL, workspace)
+}
+
+func (a *App) loadProfileInWorkspace(id, gatewayURL, workspace string) (provider.Profile, error) {
+	if gatewayURL != "" && !strings.Contains(id, "/") && !strings.HasSuffix(id, ".yaml") && !strings.HasSuffix(id, ".yml") {
+		scope := "global"
+		if workspace != "" {
+			scope = "workspace"
+		}
+		b, _, _, err := a.clientFor(gatewayURL).GetProfileScoped(a.apiCtx(), id, scope, workspace)
+		if err == nil {
+			return provider.ParseYAML(b)
+		}
+	}
+	return loadBuiltinProfile(id)
+}
+
+func (a *App) profileScope(scopeOptions ...string) (scope, workspace string) {
+	if len(scopeOptions) >= 2 {
+		scope, workspace = scopeOptions[0], scopeOptions[1]
+		if scope == "global" {
+			workspace = ""
+		}
+		return scope, workspace
+	}
+	if a != nil && a.GlobalWorkspace != "" && a.GlobalWorkspace != "default" {
+		return "workspace", a.GlobalWorkspace
+	}
+	return "global", ""
 }
 
 // ProviderList lists gateway provider instances.

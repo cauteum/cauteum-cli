@@ -48,12 +48,13 @@ func (a *App) ProviderDelete(name string) error {
 }
 
 // ProviderProfileDelete removes a custom gateway profile.
-func (a *App) ProviderProfileDelete(id string) error {
+func (a *App) ProviderProfileDelete(id string, scopeOptions ...string) error {
 	c, err := a.gatewayClient()
 	if err != nil {
 		return err
 	}
-	if err := c.DeleteProfile(a.apiCtx(), id); err != nil {
+	scope, workspace := a.profileScope(scopeOptions...)
+	if err := c.DeleteProfileScoped(a.apiCtx(), id, scope, workspace); err != nil {
 		return err
 	}
 	fmt.Printf("deleted profile %s\n", id)

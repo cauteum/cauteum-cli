@@ -150,7 +150,14 @@ Examples:
 	"provider profile": `whaleshell provider profile — custom provider YAML profiles
 
 Usage:
-  whaleshell provider profile list|show|import|export|delete|lint …
+  whaleshell profile list|show|import|update|export|delete|lint …
+  whaleshell profile import --url https://example.org/profile.yaml
+  whaleshell profile import --from ./provider-profiles
+`,
+	"profile": `whaleshell profile — reusable provider definitions
+
+Usage:
+  whaleshell profile list|show|import|update|export|delete|lint …
 `,
 	"provider refresh": `whaleshell provider refresh — credential refresh strategies
 

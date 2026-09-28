@@ -920,6 +920,7 @@ func (a *App) SandboxCreate(opt SandboxCreateOpts) error {
 	log = log.With(slog.String("sandbox_id", shortID(string(h.ID))), slog.String("image", h.Image))
 	if gwURL != "" {
 		cli := a.clientFor(gwURL)
+		_, profileWorkspace := a.profileScope()
 		baseYAML := ""
 		if b, err := os.ReadFile(basePath); err == nil {
 			baseYAML = string(b)
@@ -928,6 +929,7 @@ func (a *App) SandboxCreate(opt SandboxCreateOpts) error {
 			Name:              h.Name,
 			ID:                string(h.ID),
 			Image:             h.Image,
+			Workspace:         profileWorkspace,
 			Network:           h.Network,
 			Status:            "running",
 			Labels:            opt.Labels,
