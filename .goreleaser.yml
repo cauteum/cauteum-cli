@@ -44,7 +44,7 @@ archives:
   - id: cli
     # whaleshell-gateway rides along (linux/darwin) so `gateway ensure` works
     # from a plain install.sh setup.
-    builds: [whaleshell, whaleshell-gateway]
+    ids: [whaleshell, whaleshell-gateway]
     # windows has no gateway build
     allow_different_binary_count: true
     name_template: >-
@@ -74,7 +74,7 @@ archives:
           mode: 0755
 
   - id: gateway
-    builds: [whaleshell-gateway]
+    ids: [whaleshell-gateway]
     name_template: >-
       whaleshell-gateway_
       {{- title .Os }}_
