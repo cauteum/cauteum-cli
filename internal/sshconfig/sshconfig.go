@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+
+	"github.com/whaleshell/whaleshell-cli/internal/securefile"
 )
 
 // AliasPrefix names managed hosts (OpenShell: openshell-<name>).
@@ -218,14 +220,7 @@ func readOptional(path string) (string, error) {
 }
 
 func writePrivate(path, content string) error {
-	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
-		return err
-	}
-	tmp := path + ".tmp"
-	if err := os.WriteFile(tmp, []byte(content), 0o600); err != nil {
-		return err
-	}
-	return os.Rename(tmp, path)
+	return securefile.WriteAtomic(path, []byte(content))
 }
 
 // Install upserts block for alias into the managed file and makes sure the
