@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+## [v0.1.0-alpha.3] - 2026-10-07
+
+### Changed
+
+- Align slogx, display, driver, proxy, and runtime dependencies with their published v0.1.0-alpha.2 modules; update `golang.org/x/crypto` to v0.57.0.
+- Refresh the module graph so GoReleaser and cross-platform builds use the same compatible Docker and Moby dependency set as the released driver.
+
 ## [v0.1.0-alpha.2] - 2026-09-28
 
 ### Added
