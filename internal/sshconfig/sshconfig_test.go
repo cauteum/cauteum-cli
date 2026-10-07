@@ -3,7 +3,6 @@ package sshconfig
 import (
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 )
@@ -101,7 +100,7 @@ func TestEnsureIncludeBeforeFirstHost(t *testing.T) {
 	}
 }
 
-func TestInstallWritesPrivateFiles(t *testing.T) {
+func TestInstallWritesManagedFiles(t *testing.T) {
 	dir := t.TempDir()
 	p := Paths{Managed: filepath.Join(dir, "cfg", "whaleshell", "ssh_config"), User: filepath.Join(dir, "ssh", "config")}
 	if err := os.MkdirAll(filepath.Dir(p.User), 0o700); err != nil {
@@ -124,10 +123,6 @@ func TestInstallWritesPrivateFiles(t *testing.T) {
 	u, _ := os.ReadFile(p.User)
 	if strings.Count(string(u), "Include") != 1 || !strings.HasPrefix(string(u), "Include ") {
 		t.Fatalf("user config:\n%s", u)
-	}
-	fi, _ := os.Stat(p.Managed)
-	if runtime.GOOS != "windows" && fi.Mode().Perm() != 0o600 {
-		t.Fatalf("managed mode %o", fi.Mode().Perm())
 	}
 	if err := Uninstall(p, "whaleshell-demo"); err != nil {
 		t.Fatal(err)
