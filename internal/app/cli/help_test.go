@@ -50,3 +50,19 @@ func TestCompletionsUseWhaleshellFunctionName(t *testing.T) {
 		}
 	}
 }
+
+func TestCompletionScriptsIncludeRootCommands(t *testing.T) {
+	commands := []string{"version", "sandbox", "exec", "provider", "profile", "policy", "gateway", "logs", "term", "status", "health", "init", "doctor", "whoami", "workspace", "forward", "service", "settings", "inference", "rule", "install", "completions", "ssh-proxy"}
+	for name, script := range map[string]string{
+		"bash":       completionsBash,
+		"zsh":        completionsZsh,
+		"fish":       completionsFish,
+		"powershell": completionsPowerShell,
+	} {
+		for _, command := range commands {
+			if !strings.Contains(script, command) {
+				t.Errorf("%s completions do not include %q", name, command)
+			}
+		}
+	}
+}
