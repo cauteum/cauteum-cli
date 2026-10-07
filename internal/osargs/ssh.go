@@ -76,7 +76,7 @@ func ParseSSHProxy(args []string) (SSHProxy, error) {
 	return out, nil
 }
 
-// SandboxConnect is `sandbox connect <name> [--editor vscode|cursor] [--ssh] [-- cmd...]`.
+// SandboxConnect is `sandbox connect <name> [--editor vscode|cursor] [-- cmd...]`.
 type SandboxConnect struct {
 	Name   string
 	Editor string
@@ -92,8 +92,6 @@ func ParseSandboxConnect(args []string) (SandboxConnect, error) {
 		case a == "--":
 			out.Argv = append([]string{}, args[i+1:]...)
 			i = len(args)
-		case a == "--ssh":
-			// Legacy flag: connect is always SSH through the gateway now.
 		case a == "--editor":
 			if i+1 >= len(args) {
 				return SandboxConnect{}, fmt.Errorf("--editor needs vscode|cursor")

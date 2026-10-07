@@ -1,7 +1,7 @@
 # whaleshell-cli/docker/
 
 Agent sandbox images for the `whaleshell` CLI (`--from cursor|claude|codex`).  
-Runtime base (`whaleshell-sandbox:local` / GHCR `:cli`) is built from [`whaleshell-runtime/images/sandbox`](../../whaleshell-runtime/images/sandbox/) via `task runtime:image:cli`.
+Runtime base (`whaleshell-sandbox:local` / GHCR `:cli`) is built from the [runtime image sources](https://github.com/whaleshell/whaleshell-runtime/tree/main/images/sandbox) via `task runtime:image:cli` in the multi-repo workspace.
 
 | Path | Tag | Contents |
 |------|-----|----------|
@@ -9,7 +9,7 @@ Runtime base (`whaleshell-sandbox:local` / GHCR `:cli`) is built from [`whaleshe
 | [`agents/claude`](./agents/claude/) | `whaleshell-sandbox:claude` | + Claude Code CLI |
 | [`agents/codex`](./agents/codex/) | `whaleshell-sandbox:codex` | + OpenAI Codex CLI |
 
-Published images and BYOC: [docs/IMAGES.md](../../docs/IMAGES.md).
+Published images and BYOC: [image reference](https://whaleshell.github.io/reference/images/).
 
 ## Build
 

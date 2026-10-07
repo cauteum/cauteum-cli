@@ -3,6 +3,8 @@ package cli
 import (
 	"strings"
 	"testing"
+
+	"github.com/whaleshell/whaleshell-cli/internal/service"
 )
 
 func TestHelpNested(t *testing.T) {
@@ -21,8 +23,30 @@ func TestHelpNested(t *testing.T) {
 	if !wantsHelp([]string{"sandbox", "--help"}) {
 		t.Fatal("wantsHelp")
 	}
+	doctor := helpText([]string{"doctor"})
+	if !strings.Contains(doctor, "--dry-run|--yes") {
+		t.Fatalf("doctor help: %s", doctor)
+	}
+	if err := runDoctor(nil, []string{"cleanup", "--yes", "--dry-run"}); err == nil {
+		t.Fatal("doctor cleanup accepted conflicting confirmation flags")
+	}
 	path := helpPath([]string{"service", "expose", "-h"})
 	if len(path) != 2 || path[0] != "service" {
 		t.Fatalf("helpPath %#v", path)
+	}
+}
+
+func TestSandboxCreateRejectsRemovedNoOpSSHFlag(t *testing.T) {
+	err := runSandbox(&service.App{}, []string{"create", "--ssh"})
+	if err == nil || !strings.Contains(err.Error(), "--ssh was removed") {
+		t.Fatalf("error=%v, want explicit removed-flag error", err)
+	}
+}
+
+func TestCompletionsUseWhaleshellFunctionName(t *testing.T) {
+	for _, script := range []string{completionsBash, completionsZsh} {
+		if strings.Contains(script, "_osg") || !strings.Contains(script, "_whaleshell") {
+			t.Fatalf("completion function name is stale: %q", script)
+		}
 	}
 }

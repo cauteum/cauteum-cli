@@ -9,7 +9,7 @@
   <a href="https://github.com/whaleshell/whaleshell-cli/actions/workflows/nightly.yml"><img src="https://github.com/whaleshell/whaleshell-cli/actions/workflows/nightly.yml/badge.svg" alt="Nightly"></a>
   <a href="https://github.com/whaleshell/whaleshell-cli/releases"><img src="https://img.shields.io/github/v/release/whaleshell/whaleshell-cli?include_prereleases&sort=semver&label=release" alt="release"></a>
   <a href="https://img.shields.io/badge/status-alpha-critical"><img src="https://img.shields.io/badge/status-alpha-critical" alt="alpha"></a>
-  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License"></a>
+  <a href="https://www.apache.org/licenses/LICENSE-2.0"><img src="https://img.shields.io/badge/License-Apache--2.0-blue.svg" alt="License"></a>
   <a href="https://github.com/whaleshell/whaleshell-cli"><img src="https://img.shields.io/badge/Go-1.27+-00ADD8?logo=go" alt="Go Version"></a>
 </p>
 <p align="center">
@@ -19,6 +19,8 @@
 ---
 
 ## Overview
+
+The [quick start](https://whaleshell.github.io/get-started/) contains the supported installation and first-sandbox flow.
 
 **whaleshell-cli** is the user-facing `whaleshell` binary for the whaleshell ecosystem: sandbox lifecycle, policy checks, provider attach, gateway selection, live logs, and agent images.
 
@@ -49,17 +51,16 @@ curl -LsSf https://raw.githubusercontent.com/whaleshell/whaleshell-cli/main/inst
 | Pin alpha | `curl … \| WHALESHELL_VERSION=v0.1.0-alpha.1 sh` |
 | Nightly | `curl … \| WHALESHELL_VERSION=nightly sh` |
 
-From source / Go toolchain:
+From source in the [multi-repo workspace](https://github.com/whaleshell) (the published Go dependency set does not yet build standalone):
 
 ```bash
-go install github.com/whaleshell/whaleshell-cli/cmd/whaleshell@latest
-# or workspace checkout:
-go build -o whaleshell ./cmd/whaleshell && ./whaleshell install
+go build -C whaleshell-cli -o ../whaleshell ./cmd/whaleshell
+./whaleshell install
 ```
 
 **Requirements:** Docker or Podman. Go 1.27+ only if building from source.
 
-Alpha releases are GitHub **Pre-releases** (`v0.1.0-alpha.N`); nightlies overwrite the `nightly` tag. See org [VERSIONING.md](https://github.com/whaleshell/whaleshell/blob/main/VERSIONING.md).
+Alpha releases are GitHub **Pre-releases** (`v0.1.0-alpha.N`); nightlies overwrite the `nightly` tag. See [development and releases](https://whaleshell.github.io/reference/development/).
 
 ---
 
@@ -74,6 +75,17 @@ Alpha releases are GitHub **Pre-releases** (`v0.1.0-alpha.N`); nightlies overwri
 ./whaleshell sandbox rm demo
 ```
 
+Testcontainers cleanup is exposed through the CLI rather than a broad Docker
+prune:
+
+```bash
+./whaleshell doctor cleanup --dry-run
+./whaleshell -o json doctor cleanup --yes
+```
+
+Only dangling anonymous test volumes and stopped containers labeled
+`whaleshell=1` are in scope.
+
 ### Cursor agent
 
 ```bash
@@ -83,6 +95,7 @@ Alpha releases are GitHub **Pre-releases** (`v0.1.0-alpha.N`); nightlies overwri
 ```
 
 Agent Dockerfiles live in [`docker/agents/`](./docker/agents/). Policies: [`policies/`](./policies/).
+Runnable recipes live in [`examples/`](./examples/).
 
 ---
 
@@ -109,4 +122,4 @@ Agent Dockerfiles live in [`docker/agents/`](./docker/agents/). Policies: [`poli
 
 ## License
 
-[MIT](./LICENSE) © whaleshell
+[Apache-2.0](./LICENSE) © whaleshell

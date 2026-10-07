@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/whaleshell/whaleshell-cli/internal/global"
@@ -36,7 +37,7 @@ func execute(a *service.App, args []string) error {
 	}
 	if len(args) == 0 {
 		fmt.Println(a.Banner())
-		fmt.Println("commands: sandbox|provider|profile|policy|gateway|logs|term|status|doctor|whoami|workspace|forward|service|settings|inference|…")
+		fmt.Println("commands: sandbox|exec|provider|profile|policy|gateway|logs|term|status|health|init|doctor|whoami|workspace|forward|service|settings|inference|…")
 		fmt.Println("run 'whaleshell --help' for full usage")
 		return nil
 	}
@@ -46,6 +47,10 @@ func execute(a *service.App, args []string) error {
 	case "version":
 		fmt.Println(a.Version())
 		return nil
+	case "health":
+		return a.Health()
+	case "init":
+		return runInit(a, args[1:])
 	case "status":
 		return a.Status()
 	case "doctor", "dr":
@@ -54,6 +59,8 @@ func execute(a *service.App, args []string) error {
 		return runPolicy(a, args[1:])
 	case "sandbox", "sb":
 		return runSandbox(a, args[1:])
+	case "exec":
+		return runExec(a, args[1:])
 	case "term":
 		return runTerm(a, args[1:])
 	case "gateway", "gw":
@@ -88,7 +95,7 @@ func execute(a *service.App, args []string) error {
 	case "install":
 		return runInstall(a, args[1:])
 	default:
-		return fmt.Errorf("unknown command %q (try: status|doctor|sandbox|provider|policy|gateway|logs|workspace|forward|service|settings|whoami|term)", args[0])
+		return fmt.Errorf("unknown command %q (try: status|health|init|exec|doctor|sandbox|provider|policy|gateway|logs|workspace|forward|service|settings|whoami|term)", args[0])
 	}
 }
 
@@ -96,6 +103,27 @@ func runDoctor(a *service.App, args []string) error {
 	// OpenShell: doctor check (doctor alone → check)
 	if len(args) == 0 || args[0] == "check" {
 		return a.Doctor()
+	}
+	if args[0] == "cleanup" {
+		confirm := false
+		explicitDryRun := false
+		for _, arg := range args[1:] {
+			switch arg {
+			case "--yes", "-y":
+				if explicitDryRun {
+					return fmt.Errorf("usage: whaleshell doctor cleanup [--dry-run|--yes]")
+				}
+				confirm = true
+			case "--dry-run":
+				if confirm {
+					return fmt.Errorf("usage: whaleshell doctor cleanup [--dry-run|--yes]")
+				}
+				explicitDryRun = true
+			default:
+				return fmt.Errorf("usage: whaleshell doctor cleanup [--dry-run|--yes]")
+			}
+		}
+		return a.CleanupDockerTestResources(a.CommandContext(), confirm)
 	}
 	return fmt.Errorf("usage: whaleshell doctor check")
 }
@@ -120,33 +148,61 @@ func runCompletions(args []string) error {
 	return nil
 }
 
+func runInit(a *service.App, args []string) error {
+	opt := service.InitOpts{}
+	for i := 0; i < len(args); i++ {
+		switch args[i] {
+		case "--agent":
+			if i+1 >= len(args) {
+				return fmt.Errorf("usage: whaleshell init --agent cursor [--dir DIR] [--force]")
+			}
+			i++
+			opt.Agent = args[i]
+		case "--dir":
+			if i+1 >= len(args) {
+				return fmt.Errorf("usage: whaleshell init --agent cursor [--dir DIR] [--force]")
+			}
+			i++
+			opt.Dir = args[i]
+		case "--force", "-f":
+			opt.Force = true
+		default:
+			return fmt.Errorf("usage: whaleshell init --agent cursor [--dir DIR] [--force]")
+		}
+	}
+	if strings.TrimSpace(opt.Agent) == "" {
+		return fmt.Errorf("usage: whaleshell init --agent cursor [--dir DIR] [--force]")
+	}
+	return a.Init(opt)
+}
+
 const completionsBash = `# whaleshell bash completions
-_osg() {
+_whaleshell() {
   local cur="${COMP_WORDS[COMP_CWORD]}"
-  local cmds="sandbox provider policy gateway logs term status doctor whoami workspace forward service settings inference rule install completions ssh-proxy"
+	local cmds="sandbox exec provider policy gateway logs term status health init doctor whoami workspace forward service settings inference rule install completions ssh-proxy"
   if [[ ${COMP_CWORD} -eq 1 ]]; then
     COMPREPLY=( $(compgen -W "$cmds" -- "$cur") )
   fi
 }
-complete -F _osg whaleshell
+complete -F _whaleshell whaleshell
 `
 
 const completionsZsh = `#compdef whaleshell
-_osg() {
+_whaleshell() {
   local -a cmds
-  cmds=(sandbox provider policy gateway logs term status doctor whoami workspace forward service settings inference rule install completions ssh-proxy)
+	cmds=(sandbox exec provider policy gateway logs term status health init doctor whoami workspace forward service settings inference rule install completions ssh-proxy)
   _describe 'command' cmds
 }
-compdef _osg whaleshell
+compdef _whaleshell whaleshell
 `
 
 const completionsFish = `complete -c whaleshell -f
-complete -c whaleshell -n "__fish_use_subcommand" -a "sandbox provider policy gateway logs term status doctor whoami workspace forward service settings inference rule install completions ssh-proxy"
+complete -c whaleshell -n "__fish_use_subcommand" -a "sandbox exec provider policy gateway logs term status health init doctor whoami workspace forward service settings inference rule install completions ssh-proxy"
 `
 
 const completionsPowerShell = `Register-ArgumentCompleter -CommandName whaleshell -ScriptBlock {
   param($wordToComplete)
-  @('sandbox','provider','policy','gateway','logs','term','status','doctor','whoami','workspace','forward','service','settings','inference','rule','install','completions','ssh-proxy') |
+	@('sandbox','exec','provider','policy','gateway','logs','term','status','health','init','doctor','whoami','workspace','forward','service','settings','inference','rule','install','completions','ssh-proxy') |
     Where-Object { $_ -like "$wordToComplete*" } |
     ForEach-Object { [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_) }
 }
@@ -350,8 +406,8 @@ func parseProfileScope(a *service.App, args []string) (rest []string, scope, wor
 			}
 			scope, workspace = "workspace", args[i]
 		default:
-			if strings.HasPrefix(args[i], "--workspace=") {
-				workspace = strings.TrimSpace(strings.TrimPrefix(args[i], "--workspace="))
+			if after, ok := strings.CutPrefix(args[i], "--workspace="); ok {
+				workspace = strings.TrimSpace(after)
 				if workspace == "" {
 					return nil, "", "", fmt.Errorf("--workspace needs a name")
 				}
@@ -366,7 +422,7 @@ func parseProfileScope(a *service.App, args []string) (rest []string, scope, wor
 
 func runInstall(a *service.App, args []string) error {
 	opt := service.InstallOpts{}
-	for i := 0; i < len(args); i++ {
+	for i := range args {
 		switch args[i] {
 		case "--force":
 			opt.Force = true
@@ -788,7 +844,7 @@ func runLogs(a *service.App, args []string) error {
 		Level:  parsed.Level,
 	}
 	if parsed.Name != "" {
-		for _, n := range strings.Split(parsed.Name, ",") {
+		for n := range strings.SplitSeq(parsed.Name, ",") {
 			n = strings.TrimSpace(n)
 			if n != "" {
 				opt.Names = append(opt.Names, n)
@@ -1031,7 +1087,7 @@ func runSandbox(a *service.App, args []string) error {
 				}
 				opt.From = rest[i]
 			case "--ssh":
-				opt.SSH = true
+				return fmt.Errorf("sandbox create: --ssh was removed; SSH relay is configured automatically when a gateway is selected")
 			case "--gpu":
 				opt.GPU = true
 			case "--cdi":
@@ -1093,56 +1149,6 @@ func runSandbox(a *service.App, args []string) error {
 					return fmt.Errorf("--upload needs PATH")
 				}
 				opt.Upload = rest[i]
-			case "--agent-config":
-				i++
-				if i >= len(rest) {
-					return fmt.Errorf("--agent-config needs PATH (agent-config.yaml)")
-				}
-				opt.AgentConfig = rest[i]
-			case "--skills":
-				i++
-				if i >= len(rest) {
-					return fmt.Errorf("--skills needs PATH (skill dir or SKILL.md)")
-				}
-				opt.Skills = append(opt.Skills, rest[i])
-			case "--mcp-cursor":
-				i++
-				if i >= len(rest) {
-					return fmt.Errorf("--mcp-cursor needs PATH (mcp.json)")
-				}
-				opt.MCPCursor = rest[i]
-			case "--mcp-claude":
-				i++
-				if i >= len(rest) {
-					return fmt.Errorf("--mcp-claude needs PATH (mcp.json)")
-				}
-				opt.MCPClaude = rest[i]
-			case "--no-agent-config":
-				opt.NoAgentConfig = true
-			case "--harness":
-				i++
-				if i >= len(rest) {
-					return fmt.Errorf("--harness needs cursor|claude")
-				}
-				opt.Harness = rest[i]
-			case "--runtime-mode":
-				i++
-				if i >= len(rest) {
-					return fmt.Errorf("--runtime-mode needs once|watch")
-				}
-				opt.RuntimeMode = rest[i]
-			case "--agent-prompt":
-				i++
-				if i >= len(rest) {
-					return fmt.Errorf("--agent-prompt needs PATH")
-				}
-				opt.AgentPrompt = rest[i]
-			case "--cursor-cli-config":
-				i++
-				if i >= len(rest) {
-					return fmt.Errorf("--cursor-cli-config needs PATH (cli-config.json)")
-				}
-				opt.CursorCLIConfig = rest[i]
 			case "--cpu":
 				i++
 				if i >= len(rest) {
@@ -1197,7 +1203,66 @@ func runSandbox(a *service.App, args []string) error {
 		}
 		return a.SandboxCreate(opt)
 	case "list", "ls":
-		return a.SandboxList()
+		opt := service.SandboxListOpts{Limit: 100, Output: "table"}
+		seen := map[string]bool{}
+		for i := 1; i < len(args); i++ {
+			arg := args[i]
+			flag := strings.SplitN(arg, "=", 2)[0]
+			if seen[flag] {
+				return fmt.Errorf("sandbox list: duplicate flag %q", flag)
+			}
+			seen[flag] = true
+			value := func() (string, error) {
+				if eq := strings.IndexByte(arg, '='); eq >= 0 {
+					return arg[eq+1:], nil
+				}
+				if i+1 >= len(args) || strings.HasPrefix(args[i+1], "-") {
+					return "", fmt.Errorf("%s needs a value", arg)
+				}
+				i++
+				return args[i], nil
+			}
+			switch flag {
+			case "--limit", "--offset", "--selector", "-o", "--output":
+				v, err := value()
+				if err != nil {
+					return err
+				}
+				switch flag {
+				case "--limit":
+					n, err := strconv.ParseUint(v, 10, 32)
+					if err != nil {
+						return fmt.Errorf("sandbox list: invalid --limit %q", v)
+					}
+					opt.Limit = uint32(n)
+				case "--offset":
+					n, err := strconv.ParseUint(v, 10, 32)
+					if err != nil {
+						return fmt.Errorf("sandbox list: invalid --offset %q", v)
+					}
+					opt.Offset = uint32(n)
+				case "--selector":
+					opt.Selector = v
+				case "-o", "--output":
+					opt.Output = v
+				}
+			case "--ids":
+				opt.IDs = true
+			case "--names":
+				opt.Names = true
+			case "--all-workspaces":
+				opt.AllWorkspaces = true
+			default:
+				return fmt.Errorf("sandbox list: unknown argument %q", arg)
+			}
+		}
+		if opt.IDs && opt.Names {
+			return fmt.Errorf("sandbox list: --ids conflicts with --names")
+		}
+		if (opt.IDs || opt.Names) && seen["-o"] || (opt.IDs || opt.Names) && seen["--output"] {
+			return fmt.Errorf("sandbox list: --ids/--names conflict with --output")
+		}
+		return a.SandboxList(opt)
 	case "get", "status":
 		if len(args) < 2 {
 			return fmt.Errorf("usage: whaleshell sandbox get <name>")

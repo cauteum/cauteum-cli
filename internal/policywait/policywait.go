@@ -29,10 +29,10 @@ func (o Options) withDefaults() Options {
 		o.Settle = time.Second
 	}
 	if o.Timeout <= 0 {
-		o.Timeout = 60 * time.Second
+		o.Timeout = defaultWaitTimeout
 	}
 	if o.Poll <= 0 {
-		o.Poll = 200 * time.Millisecond
+		o.Poll = defaultPollInterval
 	}
 	if o.Now == nil {
 		o.Now = time.Now
@@ -76,10 +76,7 @@ func FileApplied(ctx context.Context, path string, want []byte, opt Options) err
 			return fmt.Errorf("%w waiting for %s", ErrTimeout, path)
 		}
 		remain := deadline.Sub(opt.Now())
-		sleep := opt.Poll
-		if sleep > remain {
-			sleep = remain
-		}
+		sleep := min(opt.Poll, remain)
 		if sleep <= 0 {
 			return fmt.Errorf("%w waiting for %s", ErrTimeout, path)
 		}

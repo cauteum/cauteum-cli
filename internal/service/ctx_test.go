@@ -11,8 +11,7 @@ func TestCommandContext_defaultsAndSet(t *testing.T) {
 	if a.CommandContext() == nil {
 		t.Fatal("CommandContext nil")
 	}
-	parent, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	parent := t.Context()
 	a.SetCommandContext(parent)
 	if a.CommandContext() != parent {
 		t.Fatal("SetCommandContext not applied")

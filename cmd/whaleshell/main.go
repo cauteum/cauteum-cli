@@ -19,8 +19,7 @@ func main() {
 
 	if err := app.Run(ctx, os.Args[1:]); err != nil {
 		log := logger.FromContext(ctx)
-		var ee *service.ExitError
-		if errors.As(err, &ee) {
+		if ee, ok := errors.AsType[*service.ExitError](err); ok {
 			log.Error("command failed", "exit_code", ee.Code, "error", err)
 			os.Exit(ee.Code)
 		}

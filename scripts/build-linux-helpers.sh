@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-FileCopyrightText: Copyright (c) 2026 the whaleshell authors
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 #
 # Cross-compile the linux helpers every release archive ships under
 # libexec/whaleshell/linux-<arch>/ so installs never need Go or a checkout:

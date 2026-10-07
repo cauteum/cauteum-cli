@@ -1,6 +1,6 @@
 #!/bin/sh
 # SPDX-FileCopyrightText: Copyright (c) 2026 the whaleshell authors
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 #
 # Install the whaleshell CLI from a GitHub release (OpenShell-style one-liner).
 #

@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 lkmavi
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 #
 # Cursor Agent + GitHub push/create-repo base policy.
 # Replace YOUR_ORG with your GitHub org/user (sed -i '' 's/YOUR_ORG/whaleshell/g' …).

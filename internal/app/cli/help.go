@@ -68,6 +68,7 @@ Global flags:
 
 Commands:
   sandbox (sb)       Create and manage sandboxes
+  exec               Execute a command in a sandbox
   provider           Provider instances and profiles
   policy (pol)       Network policy get/set/update
   gateway (gw)       Add/select/login gateways
@@ -78,6 +79,8 @@ Commands:
   settings           Gateway/local settings
   logs (lg)          Sandbox logs
   status             Gateway connectivity
+  health             Docker/Podman and gateway health probe
+  init               Write an agent starter policy
   doctor (dr)        Environment checks
   whoami             Identity (supports -o json)
   term               Interactive TUI
@@ -118,15 +121,6 @@ Flags (OpenShell-aligned):
   --workspace PATH
   --label KEY=VALUE
   --driver-config-json JSON
-  --agent-config PATH     inject skills/MCP from agent-config.yaml
-  --skills PATH           extra skill dir or SKILL.md (repeatable)
-  --mcp-cursor PATH       → $HOME/.cursor/mcp.json
-  --mcp-claude PATH       → $HOME/.claude/mcp.json
-  --harness cursor|claude supervisor harness (default cursor)
-  --runtime-mode once|watch
-  --agent-prompt PATH     → /etc/whaleshell/agent-payload/agent-prompt.md
-  --cursor-cli-config PATH → $HOME/.cursor/cli-config.json (attribution off by default)
-  --no-agent-config       skip builtin /etc/whaleshell inject
 `,
 	"sandbox template": `whaleshell sandbox template — workload templates
 
@@ -226,7 +220,11 @@ Usage:
 	"doctor": `whaleshell doctor — environment checks
 
 Usage:
-  whaleshell doctor [check]
+  whaleshell doctor check
+  whaleshell doctor cleanup [--dry-run|--yes]
+
+cleanup is a scoped dry-run by default. With --yes it removes only dangling
+anonymous Testcontainers volumes and stopped containers labeled whaleshell=1.
 `,
 	"install": `whaleshell install — install CLI binary and ensure local gateway
 
@@ -252,6 +250,22 @@ Usage:
 Usage:
   whaleshell status
   whaleshell -o json status
+`,
+	"health": `whaleshell health — engine and gateway health probe
+
+Usage:
+  whaleshell health
+  whaleshell -o json health
+`,
+	"init": `whaleshell init — write an agent starter policy
+
+Usage:
+  whaleshell init --agent cursor [--dir DIR] [--force]
+`,
+	"exec": `whaleshell exec — execute a command in a sandbox
+
+Usage:
+  whaleshell exec [--name] NAME -- COMMAND [ARG ...]
 `,
 	"term": `whaleshell term — interactive TUI
 

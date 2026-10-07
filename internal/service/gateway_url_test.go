@@ -8,6 +8,10 @@ import (
 
 func TestGuestGatewayURL(t *testing.T) {
 	cases := map[string]string{
+		"http://[::1]:7443": "http://host.whaleshell.internal:7443",
+		"https://localhost.example/path/localhost?host=127.0.0.1": "https://localhost.example/path/localhost?host=127.0.0.1",
+		"https://remote.example/localhost":                        "https://remote.example/localhost",
+		"http://localhost:7443/localhost?host=127.0.0.1":          "http://host.whaleshell.internal:7443/localhost?host=127.0.0.1",
 		"":                                     "",
 		"http://127.0.0.1:7443":                "http://host.whaleshell.internal:7443",
 		"http://localhost:7443":                "http://host.whaleshell.internal:7443",

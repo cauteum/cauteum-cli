@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 the whaleshell authors
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 #
 # Tagged releases for whaleshell-cli (and companion gateway binary).
 # Corporate alpha/beta/rc tags are auto-marked as GitHub prereleases.
@@ -59,6 +59,7 @@ archives:
         formats: [zip]
     files:
       - LICENSE*
+      - NOTICE
       - README*
       - install.sh
       # Literal dst (no {{ .Arch }} — GoReleaser does not expand templates in dst).
@@ -83,6 +84,7 @@ archives:
     formats: [tar.gz]
     files:
       - LICENSE*
+      - NOTICE
 
 checksum:
   name_template: checksums.txt

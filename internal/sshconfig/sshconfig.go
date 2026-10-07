@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 )
 
@@ -77,12 +78,7 @@ func isHostLineFor(line, alias string) bool {
 	if len(f) < 2 || strings.ToLower(f[0]) != "host" {
 		return false
 	}
-	for _, h := range f[1:] {
-		if h == alias {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(f[1:], alias)
 }
 
 // UpsertHostBlock replaces the Host block for alias in content (or appends it).
@@ -159,7 +155,7 @@ func unquote(s string) string {
 // (an Include inside a Host block would be scoped to that host). No-op when
 // an Include for managedPath already exists.
 func EnsureInclude(content, managedPath string) string {
-	for _, l := range strings.Split(content, "\n") {
+	for l := range strings.SplitSeq(content, "\n") {
 		f := strings.Fields(l)
 		if len(f) >= 2 && strings.EqualFold(f[0], "include") {
 			rest := strings.TrimSpace(strings.TrimSpace(l)[len(f[0]):])

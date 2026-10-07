@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -66,7 +67,7 @@ type profileDocument struct {
 func readProfiles(source string) ([]profileDocument, error) {
 	if strings.HasPrefix(source, "https://") {
 		client := &http.Client{
-			Timeout: 15 * time.Second,
+			Timeout: TimeoutAPI,
 			CheckRedirect: func(req *http.Request, via []*http.Request) error {
 				if req.URL.Scheme != "https" {
 					return fmt.Errorf("profile download redirect must use HTTPS")
@@ -249,6 +250,18 @@ func (a *App) ProviderCreate(args providerflags.CreateArgs) error {
 		if err != nil {
 			return err
 		}
+		discoveredConfig := prof.DiscoverConfig()
+		if args.FromExisting && len(discovered) == 0 && len(discoveredConfig) == 0 {
+			return fmt.Errorf("provider %q: no existing local credentials found for discovery.credentials", prof.ID)
+		}
+		if args.Config == nil {
+			args.Config = map[string]string{}
+		}
+		for key, value := range discoveredConfig {
+			if _, explicit := args.Config[key]; !explicit {
+				args.Config[key] = value
+			}
+		}
 		if args.FromExisting || len(envVars) == 0 {
 			envVars = discovered
 		}
@@ -312,8 +325,8 @@ func (a *App) ProviderCreate(args providerflags.CreateArgs) error {
 		RuntimeCredentials:    args.RuntimeCredentials,
 		CredentialExpiresAtMS: args.CredentialExpiresAt,
 		Config:                args.Config,
-	}
-	rec.Refresh = profileRefreshConfig(prof, envVars)
+
+		Refresh: profileRefreshConfig(prof, envVars)}
 	if err := c.PutProvider(a.apiCtx(), rec); err != nil {
 		return err
 	}
@@ -407,12 +420,7 @@ func profileRefreshConfig(prof provider.Profile, selectedEnvKeys []string) map[s
 }
 
 func containsString(list []string, s string) bool {
-	for _, x := range list {
-		if x == s {
-			return true
-		}
-	}
-	return false
+	return slices.Contains(list, s)
 }
 
 // ProviderUpdate refreshes credential values for an existing instance.
@@ -487,8 +495,8 @@ func (a *App) prepareProviders(base policy.Document, basePath string, names []st
 		attached = append(attached, instName)
 		fmt.Printf("provider: %s (type=%s env=%v)\n", instName, prof.ID, envKeys)
 	}
-	doc = provider.EffectivePolicy(base, layers, false)
-	if err := doc.Validate(); err != nil {
+	doc, err = provider.EffectivePolicy(base, layers, false)
+	if err != nil {
 		return nil, base, basePath, fmt.Errorf("provider compose: %w", err)
 	}
 	b, err := yaml.Marshal(doc)
@@ -534,11 +542,7 @@ func (a *App) resolveProviderForCreate(name, gwURL string) (provider.Profile, []
 			if len(keys) == 0 {
 				keys, err = prof.DiscoverEnvVars()
 				if err != nil {
-					if allCredentialsOptional(prof) {
-						keys = prof.EnvKeys()
-					} else {
-						return provider.Profile{}, nil, "", err
-					}
+					return provider.Profile{}, nil, "", err
 				}
 			}
 			return prof, keys, rec.Name, nil
@@ -555,12 +559,7 @@ func (a *App) resolveProviderForCreate(name, gwURL string) (provider.Profile, []
 	}
 	keys, err := prof.DiscoverEnvVars()
 	if err != nil {
-		// Network-only / inject_env:false profiles (Cursor): still attach endpoints without host secrets.
-		if allCredentialsOptional(prof) {
-			keys = prof.EnvKeys()
-		} else {
-			return provider.Profile{}, nil, "", err
-		}
+		return provider.Profile{}, nil, "", err
 	}
 	if gwURL != "" {
 		c := a.clientFor(gwURL)
@@ -573,23 +572,12 @@ func (a *App) resolveProviderForCreate(name, gwURL string) (provider.Profile, []
 		}
 		if err := c.PutProvider(a.apiCtx(), whaleshell.ProviderRecord{
 			Name: name, Type: prof.ID, Workspace: workspace, EnvVars: keys, Credentials: creds,
+			Config: prof.DiscoverConfig(),
 		}); err != nil {
 			return provider.Profile{}, nil, "", fmt.Errorf("provider %q: register on gateway: %w", name, err)
 		}
 	}
 	return prof, keys, name, nil
-}
-
-func allCredentialsOptional(p provider.Profile) bool {
-	if len(p.Credentials) == 0 {
-		return true
-	}
-	for _, c := range p.Credentials {
-		if c.Required {
-			return false
-		}
-	}
-	return true
 }
 
 func loadBuiltinProfile(idOrPath string) (provider.Profile, error) {

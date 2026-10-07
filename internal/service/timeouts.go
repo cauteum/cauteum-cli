@@ -37,3 +37,13 @@ const (
 	// TimeoutEmit — best-effort proc/log post (never block UX).
 	TimeoutEmit = 2 * time.Second
 )
+
+// Startup, refresh, and interactive login defaults.
+const (
+	forwardStartupDelay        = 300 * time.Millisecond
+	gatewayStartupTimeout      = 8 * time.Second
+	gatewayStartupPollInterval = 200 * time.Millisecond
+	credentialRefreshInterval  = 30 * time.Second
+	loginHeaderReadTimeout     = 5 * time.Second
+	loginTimeout               = 3 * time.Minute
+)

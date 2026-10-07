@@ -154,7 +154,7 @@ func (a *App) startForwardChild(id, sandbox, spec, registry string) error {
 		return fmt.Errorf("forward: start background: %w", err)
 	}
 	go func() { _ = cmd.Wait() }()
-	time.Sleep(300 * time.Millisecond)
+	time.Sleep(forwardStartupDelay)
 	fmt.Printf("forward: running in background pid=%d (whaleshell forward stop %s; log %s)\n", cmd.Process.Pid, id, logPath)
 	return nil
 }
