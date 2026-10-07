@@ -3,16 +3,16 @@ module github.com/whaleshell/whaleshell-cli
 go 1.27.0
 
 require (
-	github.com/charmbracelet/bubbletea v1.3.4
+	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/pelletier/go-toml/v2 v2.4.3
 	github.com/whaleshell/slogx v0.1.0-alpha.2
-	github.com/whaleshell/whaleshell-core v0.1.0-alpha.2
+	github.com/whaleshell/whaleshell-core v0.1.0-beta.1
 	github.com/whaleshell/whaleshell-display v0.1.0-alpha.2
 	github.com/whaleshell/whaleshell-driver v0.1.0-alpha.2
 	github.com/whaleshell/whaleshell-providers v0.1.0-alpha.2
-	github.com/whaleshell/whaleshell-proxy v0.1.0-alpha.2
-	github.com/whaleshell/whaleshell-runtime v0.1.0-alpha.2
+	github.com/whaleshell/whaleshell-proxy v0.1.0-beta.1
+	github.com/whaleshell/whaleshell-runtime v0.1.0-beta.1
 	github.com/whaleshell/whaleshell-sdk v0.1.0-alpha.2
 	golang.org/x/crypto v0.57.0
 	golang.org/x/sys v0.48.0
@@ -26,7 +26,7 @@ require (
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/charmbracelet/colorprofile v0.2.3-0.20250311203215-f60798e515dc // indirect
-	github.com/charmbracelet/x/ansi v0.8.0 // indirect
+	github.com/charmbracelet/x/ansi v0.10.1 // indirect
 	github.com/charmbracelet/x/cellbuf v0.0.13-0.20250311204145-2c3ea96c31dd // indirect
 	github.com/charmbracelet/x/term v0.2.1 // indirect
 	github.com/containerd/errdefs v1.0.0 // indirect
@@ -63,7 +63,6 @@ require (
 	go.opentelemetry.io/otel/metric v1.47.0 // indirect
 	go.opentelemetry.io/otel/trace v1.47.0 // indirect
 	golang.org/x/net v0.58.0 // indirect
-	golang.org/x/sync v0.23.0 // indirect
 	golang.org/x/text v0.42.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260706201446-f0a921348800 // indirect
 	google.golang.org/grpc v1.84.0 // indirect
