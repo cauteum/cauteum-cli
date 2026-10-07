@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/whaleshell/whaleshell-cli/internal/securefile"
 	"github.com/whaleshell/whaleshell-core/defaults"
 	"gopkg.in/yaml.v3"
 )
@@ -88,31 +89,11 @@ func Save(f File) error {
 	if err != nil {
 		return err
 	}
-	dir := filepath.Dir(p)
-	if err := os.MkdirAll(dir, 0o700); err != nil {
-		return err
-	}
 	b, err := yaml.Marshal(f)
 	if err != nil {
 		return err
 	}
-	tmp, err := os.CreateTemp(dir, ".config-*.yaml")
-	if err != nil {
-		return err
-	}
-	defer os.Remove(tmp.Name())
-	if err := tmp.Chmod(0o600); err != nil {
-		_ = tmp.Close()
-		return err
-	}
-	if _, err := tmp.Write(b); err != nil {
-		_ = tmp.Close()
-		return err
-	}
-	if err := tmp.Close(); err != nil {
-		return err
-	}
-	return os.Rename(tmp.Name(), p)
+	return securefile.WriteAtomic(p, b)
 }
 
 // CurrentURL returns the selected gateway URL if any.
