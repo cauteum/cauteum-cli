@@ -507,9 +507,11 @@ jobs:
         run: |
           set -euo pipefail
           for m in whaleshell-core whaleshell-display whaleshell-driver whaleshell-providers \
-                   whaleshell-proxy whaleshell-runtime whaleshell-sdk whaleshell-gateway slogx; do
+                   whaleshell-proxy whaleshell-runtime whaleshell-sdk slogx; do
             git clone --depth 1 "https://github.com/whaleshell/${m}.git" "${m}"
           done
+          git clone --depth 1 --branch release/v0.1.0-alpha.2 \
+            https://github.com/whaleshell/whaleshell-gateway.git whaleshell-gateway
 
       - name: Write go.work
         working-directory: ${{ github.workspace }}
