@@ -1,6 +1,18 @@
 # Changelog
 
-## [Unreleased]
+## [v0.1.0-beta.1] - 2026-10-07
+
+### Added
+
+- Add shell completion scripts and structured command error output.
+
+### Changed
+
+- Use the beta core, proxy, and runtime modules and update Bubble Tea to v1.3.10.
+
+### Fixed
+
+- Protect CLI private files with Windows ACLs and cover Docker cleanup on every CI platform.
 
 ## [v0.1.0-alpha.3] - 2026-10-07
 
