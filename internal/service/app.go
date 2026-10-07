@@ -1928,7 +1928,7 @@ func (a *App) Proxy(opt ProxyOpts) error {
 	// for keys the gateway has never managed for this sandbox.
 	if gw != nil {
 		if err := a.refreshProxySecrets(srv, gw, sandbox); err != nil {
-			log.Warn("gateway secrets unavailable", "error", err)
+			log.Warn("gateway secrets unavailable", slogx.Err(err))
 		} else {
 			log.Info("secrets loaded from gateway", "sandbox", sandbox)
 		}

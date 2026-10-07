@@ -176,38 +176,6 @@ func runInit(a *service.App, args []string) error {
 	return a.Init(opt)
 }
 
-const completionsBash = `# whaleshell bash completions
-_whaleshell() {
-  local cur="${COMP_WORDS[COMP_CWORD]}"
-	local cmds="sandbox exec provider policy gateway logs term status health init doctor whoami workspace forward service settings inference rule install completions ssh-proxy"
-  if [[ ${COMP_CWORD} -eq 1 ]]; then
-    COMPREPLY=( $(compgen -W "$cmds" -- "$cur") )
-  fi
-}
-complete -F _whaleshell whaleshell
-`
-
-const completionsZsh = `#compdef whaleshell
-_whaleshell() {
-  local -a cmds
-	cmds=(sandbox exec provider policy gateway logs term status health init doctor whoami workspace forward service settings inference rule install completions ssh-proxy)
-  _describe 'command' cmds
-}
-compdef _whaleshell whaleshell
-`
-
-const completionsFish = `complete -c whaleshell -f
-complete -c whaleshell -n "__fish_use_subcommand" -a "sandbox exec provider policy gateway logs term status health init doctor whoami workspace forward service settings inference rule install completions ssh-proxy"
-`
-
-const completionsPowerShell = `Register-ArgumentCompleter -CommandName whaleshell -ScriptBlock {
-  param($wordToComplete)
-	@('sandbox','exec','provider','policy','gateway','logs','term','status','health','init','doctor','whoami','workspace','forward','service','settings','inference','rule','install','completions','ssh-proxy') |
-    Where-Object { $_ -like "$wordToComplete*" } |
-    ForEach-Object { [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterValue', $_) }
-}
-`
-
 func runProvider(a *service.App, args []string) error {
 	if len(args) == 0 {
 		return fmt.Errorf("usage: whaleshell provider create --name NAME --type PROFILE [--from-existing|--credential KEY]")
