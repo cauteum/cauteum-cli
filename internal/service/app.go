@@ -4,19 +4,28 @@ package service
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
+	"maps"
+	"net"
+	"net/url"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/whaleshell/slogx"
 	"github.com/whaleshell/whaleshell-cli/internal/autoprovider"
 	"github.com/whaleshell/whaleshell-cli/internal/logger"
 	"github.com/whaleshell/whaleshell-cli/internal/osargs"
+	"github.com/whaleshell/whaleshell-cli/internal/outfmt"
 	"github.com/whaleshell/whaleshell-cli/internal/policywait"
 	"github.com/whaleshell/whaleshell-cli/internal/storage/gwconfig"
 	"github.com/whaleshell/whaleshell-cli/internal/storage/templates"
@@ -38,6 +47,10 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// managedSecretKeys tracks keys that must not fall back to host environment
+// values after the gateway removes them.
+type managedSecretKeys map[string]struct{}
+
 // App holds constructed dependencies for CLI commands.
 type App struct {
 	Sandboxes  *sandbox.Manager
@@ -52,12 +65,22 @@ type App struct {
 	GatewayNameOverride string
 
 	// cmdCtx is the per-invocation context (SIGINT/SIGTERM from main).
-	cmdCtx context.Context
+	cmdCtx   context.Context
+	secretMu sync.Mutex
+	// gatewaySecretKeys remembers keys that were gateway-managed so a later
+	// empty snapshot cannot revive an older value from the process environment.
+	gatewaySecretKeys map[string]managedSecretKeys
 }
 
 // New builds the default host-side graph.
 func New() *App {
-	a := &App{Display: display.None{}, DriverName: selectedDriver()}
+	selected, selectionErr := selectedDriver()
+	a := &App{Display: display.None{}, DriverName: selected}
+	if selectionErr != nil {
+		fmt.Fprintf(os.Stderr, "sandbox driver: %v\n", selectionErr)
+		a.Sandboxes = &sandbox.Manager{}
+		return a
+	}
 	switch a.DriverName {
 	case "vm", "kubernetes":
 		d, err := driver.Open(a.DriverName)
@@ -68,8 +91,19 @@ func New() *App {
 		a.Sandboxes = &sandbox.Manager{Driver: d}
 		return a
 	}
-	eng, err := driver.OpenEngine(a.DriverName)
+	var eng driver.Engine
+	var err error
+	if a.DriverName == "podman" {
+		var config map[string]any
+		config, err = podmanDriverConfigFromEnvironment()
+		if err == nil {
+			eng, err = driver.OpenEngineWithConfig(a.DriverName, config)
+		}
+	} else {
+		eng, err = driver.OpenEngine(a.DriverName)
+	}
 	if err != nil {
+		fmt.Fprintf(os.Stderr, "sandbox driver: %v\n", err)
 		a.Sandboxes = &sandbox.Manager{}
 		return a
 	}
@@ -84,8 +118,36 @@ func New() *App {
 	return a
 }
 
-func selectedDriver() string {
-	switch strings.ToLower(strings.TrimSpace(os.Getenv("WHALESHELL_DRIVER"))) {
+func selectedDriver() (string, error) {
+	configured, err := configuredComputeDriversFromEnvironment()
+	if err != nil {
+		return "", err
+	}
+	selected := strings.ToLower(strings.TrimSpace(os.Getenv("WHALESHELL_DRIVER")))
+	if selected != "" {
+		selected = normalizeSelectedDriver(selected)
+		if selected != "docker" && selected != "podman" && selected != "vm" && selected != "kubernetes" {
+			return "", fmt.Errorf("unsupported WHALESHELL_DRIVER %q", selected)
+		}
+		if len(configured) > 0 && !slices.Contains(configured, selected) {
+			return "", fmt.Errorf("WHALESHELL_DRIVER %q is not selected by openshell.gateway.compute_drivers", selected)
+		}
+		return selected, nil
+	}
+	if len(configured) == 0 {
+		return "docker", nil
+	}
+	if len(configured) == 1 {
+		return configured[0], nil
+	}
+	if slices.Contains(configured, "docker") {
+		return "docker", nil
+	}
+	return "", fmt.Errorf("multiple compute drivers are configured; set WHALESHELL_DRIVER to one of: %s", strings.Join(configured, ", "))
+}
+
+func normalizeSelectedDriver(selected string) string {
+	switch strings.ToLower(strings.TrimSpace(selected)) {
 	case "podman":
 		return "podman"
 	case "vm", "microvm":
@@ -93,7 +155,7 @@ func selectedDriver() string {
 	case "kubernetes", "k8s":
 		return "kubernetes"
 	default:
-		return "docker"
+		return strings.ToLower(strings.TrimSpace(selected))
 	}
 }
 
@@ -143,6 +205,7 @@ func (a *App) Health() error {
 	fmt.Printf("  docker.context:   %s\n", p.Context)
 	fmt.Printf("  isolation:        %s\n", p.Isolation)
 	fmt.Printf("  host.goos:        %s\n", p.HostGOOS)
+	fmt.Printf("  capabilities:     %s\n", strings.Join(p.Capabilities, ", "))
 	probeCtx, probeCancel := a.withTimeout(TimeoutWait)
 	defer probeCancel()
 	probe := a.probeLandlock(probeCtx)
@@ -232,6 +295,75 @@ func (a *App) Doctor() error {
 	return nil
 }
 
+// CleanupDockerTestResources removes only disposable resources created by the
+// Testcontainers/Whaleshell test lanes. It deliberately does not use
+// `docker system prune`: named volumes, running containers and user networks
+// are outside this command's scope.
+type CleanupReport struct {
+	AnonymousVolumes  int  `json:"anonymous_volumes" yaml:"anonymous_volumes"`
+	StoppedContainers int  `json:"stopped_containers" yaml:"stopped_containers"`
+	DryRun            bool `json:"dry_run" yaml:"dry_run"`
+	Removed           bool `json:"removed" yaml:"removed"`
+}
+
+func (a *App) CleanupDockerTestResources(ctx context.Context, confirm bool) error {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	list := func(args ...string) ([]string, error) {
+		out, err := exec.CommandContext(ctx, "docker", args...).Output()
+		if err != nil {
+			return nil, fmt.Errorf("doctor cleanup: docker %s: %w", strings.Join(args, " "), err)
+		}
+		var values []string
+		for _, line := range strings.Split(string(out), "\n") {
+			if value := strings.TrimSpace(line); value != "" {
+				values = append(values, value)
+			}
+		}
+		return values, nil
+	}
+	volumes, err := list("volume", "ls", "-q", "--filter", "label=com.docker.volume.anonymous", "--filter", "dangling=true")
+	if err != nil {
+		return err
+	}
+	containers, err := list("ps", "-aq", "--filter", "label=whaleshell=1", "--filter", "status=exited")
+	if err != nil {
+		return err
+	}
+	report := CleanupReport{AnonymousVolumes: len(volumes), StoppedContainers: len(containers), DryRun: !confirm, Removed: confirm}
+	if !confirm {
+		return a.emitCleanupReport(report)
+	}
+	for _, volume := range volumes {
+		if out, err := exec.CommandContext(ctx, "docker", "volume", "rm", volume).CombinedOutput(); err != nil {
+			return fmt.Errorf("doctor cleanup: remove volume %s: %w (%s)", volume, err, strings.TrimSpace(string(out)))
+		}
+	}
+	for _, container := range containers {
+		if out, err := exec.CommandContext(ctx, "docker", "rm", "-f", container).CombinedOutput(); err != nil {
+			return fmt.Errorf("doctor cleanup: remove container %s: %w (%s)", container, err, strings.TrimSpace(string(out)))
+		}
+	}
+	return a.emitCleanupReport(report)
+}
+
+func (a *App) emitCleanupReport(report CleanupReport) error {
+	format := "text"
+	if a != nil && a.OutputFormat != "" {
+		format = a.OutputFormat
+	}
+	return outfmt.Emit(os.Stdout, format, func(w io.Writer) error {
+		if report.DryRun {
+			_, _ = fmt.Fprintf(w, "doctor cleanup: %d anonymous test volume(s), %d stopped test container(s)\n", report.AnonymousVolumes, report.StoppedContainers)
+			_, _ = fmt.Fprintln(w, "doctor cleanup: dry-run; repeat with --yes to remove these resources")
+			return nil
+		}
+		_, err := fmt.Fprintln(w, "doctor cleanup: removed scoped test resources")
+		return err
+	}, report)
+}
+
 func landlockABIAtLeast(probe string, min int) bool {
 	// probe examples: "abi=2 (probe ok)", "abi=0 (...)"
 	const p = "abi="
@@ -298,9 +430,6 @@ func (a *App) PolicyCheck(path string) error {
 	}
 	if len(doc.Binaries) > 0 {
 		fmt.Printf(" binaries=%d", len(doc.Binaries))
-	}
-	if doc.RegoPath != "" {
-		fmt.Printf(" rego_path=%s", doc.RegoPath)
 	}
 	fmt.Println()
 	return nil
@@ -691,7 +820,6 @@ type SandboxCreateOpts struct {
 	NoHostInternal bool // skip host.whaleshell.internal ExtraHosts
 	GatewayURL     string
 	From           string // BYOC / community image alias
-	SSH            bool   // deprecated no-op: SSH relay is always on with the proxy sidecar
 	NoVolume       bool   // skip persist GuestData volume (default: persist)
 	GPU            bool
 	CDIDevices     []string
@@ -722,16 +850,6 @@ type SandboxCreateOpts struct {
 	NoKeep           bool   // delete sandbox after main command exits
 	ForceTTY         bool   // --tty force PTY for create-time exec
 
-	// Agent config injection (skills / MCP / AGENTS.md) — OpenShell-style /etc/whaleshell.
-	AgentConfig     string   // --agent-config path to agent-config.yaml
-	Skills          []string // --skills PATH (repeatable)
-	MCPCursor       string   // --mcp-cursor PATH → $HOME/.cursor/mcp.json
-	MCPClaude       string   // --mcp-claude PATH → $HOME/.claude/mcp.json
-	NoAgentConfig   bool     // --no-agent-config skip builtin + user inject
-	Harness         string   // --harness cursor|claude
-	RuntimeMode     string   // --runtime-mode once|watch
-	AgentPrompt     string   // --agent-prompt PATH → agent-payload/agent-prompt.md
-	CursorCLIConfig string   // --cursor-cli-config PATH → $HOME/.cursor/cli-config.json
 }
 
 // SandboxCreate creates and starts a sandbox.
@@ -905,7 +1023,7 @@ func (a *App) SandboxCreate(opt SandboxCreateOpts) error {
 			return err
 		}
 		spec.ProxyBin = bin
-		if err := a.attachSupervisor(ctx, &spec, doc, name, gwURL); err != nil {
+		if err := a.attachSupervisor(ctx, &spec, doc, name, gwURL, attached); err != nil {
 			return err
 		}
 	}
@@ -991,8 +1109,8 @@ func (a *App) SandboxCreate(opt SandboxCreateOpts) error {
 			return err
 		}
 	}
-	if err := a.installAgentConfig(h, opt); err != nil {
-		return fmt.Errorf("sandbox create agent-config: %w", err)
+	if err := a.installAgentConfig(h); err != nil {
+		return fmt.Errorf("sandbox create supervisor guidance: %w", err)
 	}
 	if ed := strings.ToLower(strings.TrimSpace(opt.Editor)); ed != "" {
 		if err := a.SandboxConnect(ConnectOpts{Name: h.Name, Editor: ed}); err != nil {
@@ -1021,10 +1139,95 @@ func (a *App) SandboxCreate(opt SandboxCreateOpts) error {
 }
 
 // SandboxList prints sandboxes.
-func (a *App) SandboxList() error {
-	list, err := a.ListSandboxes()
+type SandboxListOpts struct {
+	Limit         uint32
+	Offset        uint32
+	IDs           bool
+	Names         bool
+	Selector      string
+	AllWorkspaces bool
+	Output        string
+}
+
+// SandboxList prints gateway-registered sandboxes using OpenShell list semantics.
+func (a *App) SandboxList(opt SandboxListOpts) error {
+	selector, err := parseSandboxLabelSelector(opt.Selector)
 	if err != nil {
 		return err
+	}
+	if opt.Output != "" && opt.Output != "table" && opt.Output != "json" && opt.Output != "yaml" {
+		return fmt.Errorf("sandbox list: invalid output %q (expected table, json, or yaml)", opt.Output)
+	}
+	client, err := a.gatewayClient()
+	if err != nil {
+		return err
+	}
+	ctx, cancel := a.withTimeout(TimeoutAPI)
+	defer cancel()
+	list, err := client.List(ctx)
+	if err != nil {
+		return fmt.Errorf("sandbox list: %w", err)
+	}
+	filtered := list[:0]
+	for _, sb := range list {
+		if !opt.AllWorkspaces {
+			workspace := sb.Workspace
+			if workspace == "" {
+				workspace = "default"
+			}
+			selectedWorkspace := a.GlobalWorkspace
+			if selectedWorkspace == "" {
+				selectedWorkspace = "default"
+			}
+			if workspace != selectedWorkspace {
+				continue
+			}
+		}
+		matched := true
+		for key, value := range selector {
+			if sb.Labels[key] != value {
+				matched = false
+				break
+			}
+		}
+		if matched {
+			filtered = append(filtered, sb)
+		}
+	}
+	list = filtered
+	if opt.Offset >= uint32(len(list)) {
+		list = nil
+	} else {
+		list = list[opt.Offset:]
+	}
+	if uint32(len(list)) > opt.Limit {
+		list = list[:opt.Limit]
+	}
+	if opt.IDs || opt.Names {
+		for _, sb := range list {
+			if opt.IDs {
+				fmt.Println(sb.ID)
+			} else if opt.AllWorkspaces {
+				workspace := sb.Workspace
+				if workspace == "" {
+					workspace = "default"
+				}
+				fmt.Printf("%s/%s\n", workspace, sb.Name)
+			} else {
+				fmt.Println(sb.Name)
+			}
+		}
+		return nil
+	}
+	switch opt.Output {
+	case "json":
+		enc := json.NewEncoder(os.Stdout)
+		enc.SetIndent("", "  ")
+		return enc.Encode(list)
+	case "yaml":
+		return yaml.NewEncoder(os.Stdout).Encode(list)
+	case "", "table":
+	default:
 	}
 	if len(list) == 0 {
 		fmt.Println("sandbox list: (none)")
@@ -1032,7 +1235,107 @@ func (a *App) SandboxList() error {
 	}
 	fmt.Printf("%-16s %-12s %-20s %s\n", "NAME", "ID", "STATUS", "IMAGE")
 	for _, s := range list {
-		fmt.Printf("%-16s %-12s %-20s %s\n", s.Name, shortID(string(s.ID)), s.Status, s.Image)
+		fmt.Printf("%-16s %-12s %-20s %s\n", s.Name, shortID(s.ID), s.Status, s.Image)
+	}
+	return nil
+}
+
+func parseSandboxLabelSelector(raw string) (map[string]string, error) {
+	out := map[string]string{}
+	if strings.TrimSpace(raw) == "" {
+		return out, nil
+	}
+	pairs := 0
+	for _, term := range strings.Split(raw, ",") {
+		term = strings.TrimSpace(term)
+		if term == "" {
+			continue
+		}
+		pairs++
+		if pairs > 64 {
+			return nil, fmt.Errorf("sandbox list: label selector exceeds 64 pair limit")
+		}
+		key, value, ok := strings.Cut(term, "=")
+		key, value = strings.TrimSpace(key), strings.TrimSpace(value)
+		if !ok {
+			return nil, fmt.Errorf("sandbox list: invalid selector %q (expected key1=value1,key2=value2)", raw)
+		}
+		if err := validateSandboxLabelKey(key); err != nil {
+			return nil, fmt.Errorf("sandbox list: invalid selector %q: %w", raw, err)
+		}
+		if err := validateSandboxLabelValue(value); err != nil {
+			return nil, fmt.Errorf("sandbox list: invalid selector %q: %w", raw, err)
+		}
+		// The upstream parser inserts into a map; repeated keys use the last value.
+		out[key] = value
+	}
+	return out, nil
+}
+
+func validateSandboxLabelKey(key string) error {
+	if key == "" {
+		return fmt.Errorf("label key cannot be empty")
+	}
+	if len(key) > 253 {
+		return fmt.Errorf("label key exceeds 253 characters")
+	}
+	prefix, name, hasPrefix := strings.Cut(key, "/")
+	if !hasPrefix {
+		name = prefix
+		prefix = ""
+	}
+	if name == "" {
+		return fmt.Errorf("label key name segment cannot be empty")
+	}
+	if len(name) > 63 {
+		return fmt.Errorf("label key name segment exceeds 63 characters")
+	}
+	if err := validateLabelSegment(name); err != nil {
+		return fmt.Errorf("label key name segment: %w", err)
+	}
+	if !hasPrefix {
+		return nil
+	}
+	if prefix == "" {
+		return fmt.Errorf("label key prefix cannot be empty when '/' is present")
+	}
+	if len(prefix) > 253 {
+		return fmt.Errorf("label key prefix exceeds 253 characters")
+	}
+	for _, r := range prefix {
+		if (r < 'a' || r > 'z') && (r < '0' || r > '9') && r != '-' && r != '.' {
+			return fmt.Errorf("label key prefix must be a DNS subdomain")
+		}
+	}
+	if strings.Contains(prefix, "..") || strings.ContainsAny(prefix[:1]+prefix[len(prefix)-1:], "-.") {
+		return fmt.Errorf("label key prefix cannot start or end with '-' or '.', or contain consecutive dots")
+	}
+	return nil
+}
+
+func validateSandboxLabelValue(value string) error {
+	if value == "" {
+		return nil
+	}
+	if len(value) > 63 {
+		return fmt.Errorf("label value exceeds 63 characters")
+	}
+	return validateLabelSegment(value)
+}
+
+func validateLabelSegment(value string) error {
+	for _, r := range value {
+		if !unicode.IsLetter(r) && !unicode.IsNumber(r) && r != '-' && r != '_' && r != '.' {
+			return fmt.Errorf("contains invalid characters")
+		}
+	}
+	first, _ := utf8.DecodeRuneInString(value)
+	last, _ := utf8.DecodeLastRuneInString(value)
+	if !unicode.IsLetter(first) && !unicode.IsNumber(first) {
+		return fmt.Errorf("must start with alphanumeric character")
+	}
+	if !unicode.IsLetter(last) && !unicode.IsNumber(last) {
+		return fmt.Errorf("must end with alphanumeric character")
 	}
 	return nil
 }
@@ -1186,7 +1489,6 @@ func (a *App) LogsToOpts(ctx context.Context, opt LogsOpts, w io.Writer) error {
 		var mu sync.Mutex
 		errCh := make(chan error, len(names))
 		for _, n := range names {
-			n := n
 			go func() {
 				pr, pw := io.Pipe()
 				go func() {
@@ -1604,19 +1906,37 @@ func (a *App) Proxy(opt ProxyOpts) error {
 	defer audit.Close()
 	srv := proxy.NewServer(&eng, audit)
 	srv.GatewayToken = sandboxToken
+	if gw != nil && sandboxToken != "" {
+		policyTLSConfig, tlsErr := relayclient.GatewayTLSConfigFromEnvironment()
+		if tlsErr != nil {
+			return tlsErr
+		}
+		srv.ReportPolicyStatus = func(reportCtx context.Context, revision uint32, loadError string) error {
+			callCtx, cancel := context.WithTimeout(reportCtx, 5*time.Second)
+			defer cancel()
+			return relayclient.ReportPolicyStatus(callCtx, relayclient.Config{
+				GatewayURL:          gwURL,
+				GatewayGRPCEndpoint: strings.TrimSpace(os.Getenv("WHALESHELL_GATEWAY_GRPC_ENDPOINT")),
+				Sandbox:             sandbox,
+				Token:               sandboxToken,
+				TLSConfig:           policyTLSConfig,
+			}, revision, loadError)
+		}
+	}
 
-	// Prefer gateway-stored secrets; fall back to process env.
+	// Prefer gateway-stored secrets; process environment remains a fallback only
+	// for keys the gateway has never managed for this sandbox.
 	if gw != nil {
-		if err := refreshProxySecrets(srv, gw, sandbox); err != nil {
+		if err := a.refreshProxySecrets(srv, gw, sandbox); err != nil {
 			log.Warn("gateway secrets unavailable", "error", err)
 		} else {
 			log.Info("secrets loaded from gateway", "sandbox", sandbox)
 		}
 		go func() {
-			t := time.NewTicker(30 * time.Second)
+			t := time.NewTicker(credentialRefreshInterval)
 			defer t.Stop()
 			for range t.C {
-				_ = refreshProxySecrets(srv, gw, sandbox)
+				_ = a.refreshProxySecrets(srv, gw, sandbox)
 			}
 		}()
 	}
@@ -1624,13 +1944,21 @@ func (a *App) Proxy(opt ProxyOpts) error {
 	// Supervisor relay (OpenShell ConnectSupervisor): outbound session to the
 	// gateway bridging SSH sessions to the sandbox sshd socket.
 	if sock := strings.TrimSpace(os.Getenv(EnvSSHSocket)); sock != "" && gw != nil && sandboxToken != "" {
+		relayTLSConfig, err := relayclient.GatewayTLSConfigFromEnvironment()
+		if err != nil {
+			return err
+		}
 		go func() {
 			_ = relayclient.Run(ctx, relayclient.Config{
-				GatewayURL: gwURL,
-				Sandbox:    sandbox,
-				Token:      sandboxToken,
-				SSHSocket:  sock,
-				Log:        log.Logger,
+				GatewayURL:              gwURL,
+				GatewayGRPCEndpoint:     strings.TrimSpace(os.Getenv("WHALESHELL_GATEWAY_GRPC_ENDPOINT")),
+				SupervisorControlSocket: strings.TrimSpace(os.Getenv("WHALESHELL_SUPERVISOR_CONTROL_SOCKET")),
+				Sandbox:                 sandbox,
+				Token:                   sandboxToken,
+				SSHSocket:               sock,
+				TargetDialSocket:        strings.TrimSpace(os.Getenv(EnvTargetDialSocket)),
+				TLSConfig:               relayTLSConfig,
+				Log:                     log.Logger,
 			})
 		}()
 		log.Info("supervisor relay enabled", "socket", sock)
@@ -1651,18 +1979,45 @@ func (a *App) Proxy(opt ProxyOpts) error {
 	return srv.ListenAndServe(ctx, listen)
 }
 
-func refreshProxySecrets(srv *proxy.Server, c *whaleshell.Client, sandbox string) error {
+func (a *App) refreshProxySecrets(srv *proxy.Server, c *whaleshell.Client, sandbox string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), TimeoutAPIShort)
 	defer cancel()
 	m, err := c.ResolveSecrets(ctx, sandbox)
 	if err != nil {
 		return err
 	}
-	// Merge with process env so non-provider keys still work.
-	store := proxy.LoadSecretsFromEnviron(os.Environ())
-	for k, v := range m {
-		store[k] = v
+	a.secretMu.Lock()
+	if a.gatewaySecretKeys == nil {
+		a.gatewaySecretKeys = make(map[string]managedSecretKeys)
 	}
+	managed := a.gatewaySecretKeys[sandbox]
+	if managed == nil {
+		managed = make(managedSecretKeys)
+		a.gatewaySecretKeys[sandbox] = managed
+	}
+	for key := range m {
+		managed[key] = struct{}{}
+	}
+	if m["GITHUB_TOKEN"] != "" {
+		managed["GH_TOKEN"] = struct{}{}
+	}
+	if m["GH_TOKEN"] != "" {
+		managed["GITHUB_TOKEN"] = struct{}{}
+	}
+	store := gatewayProxySecretSnapshot(proxy.LoadSecretsFromEnviron(os.Environ()), m, managed)
+	a.secretMu.Unlock()
+	srv.SetSecrets(store)
+	return nil
+}
+
+func gatewayProxySecretSnapshot(environment, gateway map[string]string, managed managedSecretKeys) proxy.SecretStore {
+	store := proxy.SecretStore{}
+	for key, value := range environment {
+		if _, wasGatewayManaged := managed[key]; !wasGatewayManaged {
+			store[key] = value
+		}
+	}
+	maps.Copy(store, gateway)
 	// Mirror GitHub token aliases (policy/credential_keys may list both).
 	if v := store["GITHUB_TOKEN"]; v != "" {
 		if _, ok := store["GH_TOKEN"]; !ok {
@@ -1674,21 +2029,26 @@ func refreshProxySecrets(srv *proxy.Server, c *whaleshell.Client, sandbox string
 			store["GITHUB_TOKEN"] = v
 		}
 	}
-	srv.SetSecrets(store)
-	return nil
+	return store
 }
 
 // GuestGatewayURL rewrites loopback (and legacy host.docker.internal) gateway URLs
 // to host.whaleshell.internal — the OpenShell-style host-gateway alias injected via ExtraHosts.
 func GuestGatewayURL(gwURL string) string {
-	u := strings.TrimSpace(gwURL)
-	if u == "" {
-		return u
+	raw := strings.TrimSpace(gwURL)
+	u, err := url.Parse(raw)
+	if err != nil || u.Host == "" {
+		return raw
 	}
-	u = strings.Replace(u, "127.0.0.1", "host.whaleshell.internal", 1)
-	u = strings.Replace(u, "localhost", "host.whaleshell.internal", 1)
-	u = strings.Replace(u, "host.docker.internal", "host.whaleshell.internal", 1)
-	return u
+	switch strings.ToLower(u.Hostname()) {
+	case "127.0.0.1", "localhost", "::1", "host.docker.internal":
+		port := u.Port()
+		u.Host = defaults.HostInternal
+		if port != "" {
+			u.Host = net.JoinHostPort(defaults.HostInternal, port)
+		}
+	}
+	return u.String()
 }
 
 // gatewayAuditPusher adapts SDK client to proxy.LogPusher.
@@ -1832,6 +2192,7 @@ const EnvSandboxToken = "WHALESHELL_SANDBOX_TOKEN"
 
 // EnvSSHSocket is set by the driver when the sidecar shares the sshd socket.
 const EnvSSHSocket = "WHALESHELL_SSH_SOCKET"
+const EnvTargetDialSocket = "WHALESHELL_TCP_DIAL_SOCKET"
 
 // proxyGatewayEnv adds WHALESHELL_GATEWAY_URL / WHALESHELL_SANDBOX /
 // WHALESHELL_SANDBOX_TOKEN so the sidecar can resolve encrypted provider
@@ -1884,22 +2245,35 @@ func inferenceProxyEnv(c *whaleshell.Client) []string {
 	return out
 }
 
-func inferenceUpstreamForType(providerName string, c *whaleshell.Client, ctx context.Context) string {
+type providerReader interface {
+	GetProvider(context.Context, string) (whaleshell.ProviderRecord, error)
+}
+
+func inferenceUpstreamForType(providerName string, c providerReader, ctx context.Context) string {
 	rec, err := c.GetProvider(ctx, providerName)
 	if err != nil {
 		return ""
 	}
+	if configured := strings.TrimSpace(rec.Config["base_url"]); configured != "" {
+		u, err := url.Parse(configured)
+		if err != nil || u.Host == "" || u.User != nil || (u.Scheme != "http" && u.Scheme != "https") {
+			return ""
+		}
+		return configured
+	}
 	switch strings.ToLower(rec.Type) {
 	case "nvidia":
-		return "https://integrate.api.nvidia.com"
-	case "openai", "codex", "deepinfra":
-		return "https://api.openai.com"
+		return defaults.InferenceNVIDIA
+	case "openai", "codex":
+		return defaults.InferenceOpenAI
+	case "deepinfra":
+		return defaults.InferenceDeepInfra
 	case "anthropic", "claude", "claude-code":
-		return "https://api.anthropic.com"
+		return defaults.InferenceAnthropic
 	case "ollama":
-		return "http://host.whaleshell.internal:11434"
+		return defaults.InferenceOllama
 	default:
-		return "https://api.openai.com"
+		return ""
 	}
 }
 
@@ -2008,7 +2382,7 @@ func (a *App) AgentLogin(name string) error {
 			return fmt.Errorf("agent login: set at least one of %s", strings.Join(keys, ", "))
 		}
 		fmt.Println("ok: use --provider cursor (and --provider github if needed) on sandbox create")
-		fmt.Println("docs: docs/CURSOR.md")
+		fmt.Println("docs: https://whaleshell.github.io/guides/cursor/")
 		return nil
 	default:
 		return fmt.Errorf("agent login: unknown agent %q (supported: cursor)", name)
@@ -2027,7 +2401,7 @@ func findModuleDir(modulePath string) (string, error) {
 	short := strings.TrimPrefix(modulePath, "github.com/whaleshell/")
 	for _, start := range candidates {
 		dir := start
-		for i := 0; i < 8; i++ {
+		for range 8 {
 			gm := filepath.Join(dir, "go.mod")
 			b, err := os.ReadFile(gm)
 			if err == nil && strings.Contains(string(b), want) {

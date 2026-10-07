@@ -1,5 +1,5 @@
 // SPDX-FileCopyrightText: Copyright (c) 2026 whaleshell
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Apache-2.0
 
 package service
 
@@ -9,14 +9,17 @@ import (
 	"os"
 
 	core "github.com/whaleshell/whaleshell-core"
-	"github.com/whaleshell/whaleshell-core/defaults"
 	"github.com/whaleshell/whaleshell-driver/driver"
 	"github.com/whaleshell/whaleshell-runtime/agentconfig"
 )
 
-// sandboxGuest adapts the compute driver for agentconfig.Install.
+type guestDriver interface {
+	Exec(context.Context, core.ID, driver.ExecRequest) (driver.ExecResult, error)
+	CopyTo(context.Context, core.ID, string, string) error
+}
+
 type sandboxGuest struct {
-	drv driver.ComputeDriver
+	drv guestDriver
 	id  core.ID
 	ctx context.Context
 }
@@ -36,61 +39,18 @@ func (g sandboxGuest) CopyTo(hostSrc, guestDest string) error {
 	return g.drv.CopyTo(g.ctx, g.id, hostSrc, guestDest)
 }
 
-func (a *App) installAgentConfig(h driver.Handle, opt SandboxCreateOpts) error {
-	if opt.NoAgentConfig {
-		return nil
-	}
+// installAgentConfig installs only the supervisor-owned policy advisor and
+// no-overwrite AGENTS.md pointer. Agent configuration remains image-owned.
+func (a *App) installAgentConfig(h driver.Handle) error {
 	if a.Sandboxes == nil || a.Sandboxes.Driver == nil {
-		return fmt.Errorf("agent-config: docker not available")
+		return fmt.Errorf("sandbox guidance: compute driver unavailable")
 	}
-	cfg := agentconfig.DefaultOptions()
-	cfg.ManifestPath = opt.AgentConfig
-	cfg.SkillPaths = append([]string{}, opt.Skills...)
-	cfg.MCPCursor = opt.MCPCursor
-	cfg.MCPClaude = opt.MCPClaude
-	if opt.Harness != "" {
-		cfg.Harness = opt.Harness
-	}
-	if opt.RuntimeMode != "" {
-		cfg.RuntimeMode = opt.RuntimeMode
-	}
-	if opt.AgentPrompt != "" {
-		cfg.PromptFile = opt.AgentPrompt
-	}
-	if opt.CursorCLIConfig != "" {
-		cfg.CursorCLIConfig = opt.CursorCLIConfig
-		cfg.SeedCursorCLI = true
-	}
-
-	st, err := agentconfig.Stage(cfg)
+	st, err := agentconfig.Stage(agentconfig.DefaultOptions())
 	if err != nil {
 		return err
 	}
 	defer func() { _ = os.RemoveAll(st.Dir) }()
-
 	ctx, cancel := a.withTimeout(TimeoutWait)
 	defer cancel()
-	g := sandboxGuest{drv: a.Sandboxes.Driver, id: h.ID, ctx: ctx}
-	if err := agentconfig.Install(g, st); err != nil {
-		return err
-	}
-
-	fmt.Printf("agent-config: %s + %s", defaults.GuestSkills, defaults.GuestAgentPayload)
-	if st.MCPCursorHost != "" || st.MCPClaudeHost != "" {
-		fmt.Printf(" + mcp")
-	}
-	if st.CLIConfigHost != "" {
-		fmt.Printf(" + cli-config(attribution=off)")
-	}
-	if len(st.HomeSeeds) > 0 {
-		fmt.Printf(" + home seeds")
-	}
-	fmt.Printf(" (HOME→%s, harness=%s/%s", defaults.GuestSandboxHome, st.Harness, st.RuntimeMode)
-	if st.AgentsMDHost != "" {
-		fmt.Printf("; /AGENTS.md")
-	}
-	fmt.Printf(")\n")
-	fmt.Printf("agent-config: run supervisor: whaleshell sandbox exec %s -- %s/runtime/entrypoint.sh\n",
-		h.Name, defaults.GuestAgentPayload)
-	return nil
+	return agentconfig.Install(sandboxGuest{drv: a.Sandboxes.Driver, id: h.ID, ctx: ctx}, st)
 }

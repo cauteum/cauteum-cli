@@ -50,9 +50,12 @@ func TestOpenShellOpenAIProfileComposesAndRewritesMockRequest(t *testing.T) {
 	profile.Endpoints[0].Host = host
 	profile.Endpoints[0].Port = port
 	profile.Endpoints[0].TLS = "clear"
-	effective := provider.EffectivePolicy(policy.Document{Version: 1}, []provider.Layer{{
+	effective, err := provider.EffectivePolicy(policy.Document{Version: 1}, []provider.Layer{{
 		InstanceName: "openai", Profile: profile, EnvVars: []string{"OPENAI_API_KEY"},
 	}}, false)
+	if err != nil {
+		t.Fatal(err)
+	}
 	rules := effective.NetworkAllows()
 	if len(rules) != 1 || len(rules[0].CredentialKeys) != 1 || rules[0].CredentialKeys[0] != "OPENAI_API_KEY" {
 		t.Fatalf("profile credential binding = %#v", rules)

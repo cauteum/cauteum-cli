@@ -151,7 +151,7 @@ func samePath(a, b string) bool {
 
 func pathContains(pathEnv, dir string) bool {
 	dir = filepath.Clean(dir)
-	for _, p := range strings.Split(pathEnv, string(os.PathListSeparator)) {
+	for p := range strings.SplitSeq(pathEnv, string(os.PathListSeparator)) {
 		if p == "" {
 			continue
 		}

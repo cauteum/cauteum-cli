@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 whaleshell
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 #
 # OpenShell-style GitHub write base policy for org whaleshell.
 # Builtin github *provider*: API read-only + git-upload-pack only.

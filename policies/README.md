@@ -17,6 +17,6 @@ whaleshell follows the same idea with a thin CLI tree:
 
 - `default.yaml` — create-without-thinking baseline (like OpenShell default, but inference-oriented)
 - `cursor.yaml` — one first-class agent recipe (also copied by `whaleshell init --agent cursor`)
-- Further agents: `examples/` recipes and/or [provider profiles](../../docs/PROVIDERS.md) (`github`, `nvidia`, …)
+- Further agents: [`../examples/`](../examples/) recipes and [provider profiles](https://whaleshell.github.io/guides/provider-profiles/) (`github`, `nvidia`, …)
 
 You do not need more files under `policies/` unless you want another first-class `whaleshell init --agent …` target.

@@ -124,7 +124,7 @@ func fetchOIDCMeta(gatewayURL string) (oidcMeta, error) {
 	if err != nil {
 		return oidcMeta{}, err
 	}
-	res, err := (&http.Client{Timeout: 15 * time.Second}).Do(req)
+	res, err := (&http.Client{Timeout: TimeoutAPI}).Do(req)
 	if err != nil {
 		return oidcMeta{}, err
 	}
@@ -168,7 +168,7 @@ func (a *App) gatewayLoginBrowserLocal(gatewayURL string) (string, error) {
 			fmt.Fprint(w, "whaleshell gateway login ok — you can close this tab")
 			ch <- result{token: tok}
 		}),
-		ReadHeaderTimeout: 5 * time.Second,
+		ReadHeaderTimeout: loginHeaderReadTimeout,
 	}
 	go func() {
 		_ = srv.Serve(ln)
@@ -186,7 +186,7 @@ func (a *App) gatewayLoginBrowserLocal(gatewayURL string) (string, error) {
 	select {
 	case res := <-ch:
 		return res.token, res.err
-	case <-time.After(3 * time.Minute):
+	case <-time.After(loginTimeout):
 		return "", fmt.Errorf("timed out waiting for login callback")
 	}
 }

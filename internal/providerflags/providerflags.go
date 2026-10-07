@@ -87,7 +87,7 @@ func ParseCreate(args []string, lookupEnv func(string) (string, bool)) (CreateAr
 			if i >= len(args) {
 				return CreateArgs{}, fmt.Errorf("--env needs a value")
 			}
-			for _, k := range strings.Split(args[i], ",") {
+			for k := range strings.SplitSeq(args[i], ",") {
 				k = strings.TrimSpace(k)
 				if k != "" {
 					out.EnvVars = append(out.EnvVars, k)

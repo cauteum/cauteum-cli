@@ -157,8 +157,7 @@ func (a *App) SandboxConnect(opt ConnectOpts) error {
 	cmd := exec.Command(sshBin, SSHCommandArgs(pc, sshconfig.Alias(name), tty, opt.Argv)...)
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = os.Stdin, os.Stdout, os.Stderr
 	if err := cmd.Run(); err != nil {
-		var ee *exec.ExitError
-		if errors.As(err, &ee) {
+		if ee, ok := errors.AsType[*exec.ExitError](err); ok {
 			return &ExitError{Code: ee.ExitCode()}
 		}
 		return err
@@ -263,7 +262,7 @@ func (a *App) SSHProxy(opt SSHProxyOpts) error {
 			sandbox = name
 		}
 		revoke = func() {
-			rctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			rctx, cancel := context.WithTimeout(context.Background(), TimeoutAPIShort)
 			defer cancel()
 			_ = c.RevokeSSHSession(rctx, sess.SessionID)
 		}
@@ -353,7 +352,7 @@ func (a *App) openSSHClient(ctx context.Context, sandbox string) (*ssh.Client, f
 		return nil, nil, err
 	}
 	revoke := func() {
-		rctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		rctx, cancel := context.WithTimeout(context.Background(), TimeoutAPIShort)
 		defer cancel()
 		_ = c.RevokeSSHSession(rctx, sess.SessionID)
 	}

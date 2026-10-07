@@ -75,7 +75,7 @@ func (a *App) GatewayEnsure() error {
 		_ = cmd.Wait()
 		_ = logF.Close()
 	}()
-	deadline := time.Now().Add(8 * time.Second)
+	deadline := time.Now().Add(gatewayStartupTimeout)
 	for time.Now().Before(deadline) {
 		ctx, cancel := a.withTimeout(TimeoutProbeFast)
 		_, err := a.clientFor(localGatewayURL).Healthz(ctx)
@@ -87,7 +87,7 @@ func (a *App) GatewayEnsure() error {
 			fmt.Printf("gateway ensure: started %s (pid %d, log %s)\n", localGatewayURL, cmd.Process.Pid, logPath)
 			return nil
 		}
-		time.Sleep(200 * time.Millisecond)
+		time.Sleep(gatewayStartupPollInterval)
 	}
 	err = fmt.Errorf("gateway ensure: started %s but healthz not ready (see %s)", bin, logPath)
 	log.Error("gateway healthz timeout", slogx.Err(err))

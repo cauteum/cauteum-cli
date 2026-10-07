@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 lkmavi
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 #
 # Cursor-oriented sandbox policy (C1 agent-in-sandbox / C2 host IDE + workdir).
 

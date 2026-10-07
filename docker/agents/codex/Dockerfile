@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 the whaleshell authors
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 #
 # OpenAI Codex CLI preinstalled.
 # Base (whaleshell-runtime sandboxes/base) already ships NodeSource Node.js + npm —

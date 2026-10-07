@@ -1,5 +1,5 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 lkmavi
-# SPDX-License-Identifier: MIT
+# SPDX-License-Identifier: Apache-2.0
 #
 # Cursor Agent CLI preinstalled (like OpenShell community base baking agent CLIs).
 # Installer puts a bash wrapper + bundled node under ~/.local/share/cursor-agent;

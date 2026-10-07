@@ -68,8 +68,8 @@ func Parse(args []string) (Context, []string) {
 				i++
 			}
 		default:
-			if strings.HasPrefix(a, "-g=") {
-				v := strings.TrimPrefix(a, "-g=")
+			if after, ok := strings.CutPrefix(a, "-g="); ok {
+				v := after
 				if looksLikeURL(v) {
 					ctx.GatewayURL = v
 				} else {
@@ -78,8 +78,8 @@ func Parse(args []string) (Context, []string) {
 				i++
 				continue
 			}
-			if strings.HasPrefix(a, "--gateway=") {
-				v := strings.TrimPrefix(a, "--gateway=")
+			if after, ok := strings.CutPrefix(a, "--gateway="); ok {
+				v := after
 				if looksLikeURL(v) {
 					ctx.GatewayURL = v
 				} else {
@@ -88,18 +88,18 @@ func Parse(args []string) (Context, []string) {
 				i++
 				continue
 			}
-			if strings.HasPrefix(a, "--workspace=") {
-				ctx.Workspace = strings.TrimPrefix(a, "--workspace=")
+			if after, ok := strings.CutPrefix(a, "--workspace="); ok {
+				ctx.Workspace = after
 				i++
 				continue
 			}
-			if strings.HasPrefix(a, "-o=") {
-				ctx.Output = strings.ToLower(strings.TrimPrefix(a, "-o="))
+			if after, ok := strings.CutPrefix(a, "-o="); ok {
+				ctx.Output = strings.ToLower(after)
 				i++
 				continue
 			}
-			if strings.HasPrefix(a, "--output=") {
-				ctx.Output = strings.ToLower(strings.TrimPrefix(a, "--output="))
+			if after, ok := strings.CutPrefix(a, "--output="); ok {
+				ctx.Output = strings.ToLower(after)
 				i++
 				continue
 			}
