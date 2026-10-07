@@ -4,11 +4,16 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
 
 func TestCleanupDockerTestResourcesIsScopedAndDryRunByDefault(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("fake Docker executable uses a Unix shell script")
+	}
+
 	binDir := t.TempDir()
 	logPath := filepath.Join(t.TempDir(), "docker.log")
 	docker := filepath.Join(binDir, "docker")
