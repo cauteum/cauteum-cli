@@ -3,8 +3,8 @@ package securefile
 import (
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
+	"unsafe"
 
 	"golang.org/x/sys/windows"
 )
@@ -34,7 +34,11 @@ func TestWriteAtomicRestrictsWindowsACL(t *testing.T) {
 		if err != nil || control&windows.SE_DACL_PROTECTED == 0 {
 			t.Fatalf("%s inherited DACL: control=%v err=%v", target, control, err)
 		}
-		if !strings.Contains(sd.String(), user.User.Sid.String()) {
+		var ace *windows.ACCESS_ALLOWED_ACE
+		if err := windows.GetAce(dacl, 0, &ace); err != nil {
+			t.Fatal(err)
+		}
+		if !user.User.Sid.Equals((*windows.SID)(unsafe.Pointer(&ace.SidStart))) {
 			t.Fatalf("%s DACL does not name current user: %s", target, sd.String())
 		}
 	}
