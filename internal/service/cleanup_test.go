@@ -2,29 +2,58 @@ package service
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"os"
 	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 )
 
-func TestCleanupDockerTestResourcesIsScopedAndDryRunByDefault(t *testing.T) {
-	if runtime.GOOS == "windows" {
-		t.Skip("fake Docker executable uses a Unix shell script")
+func TestMain(m *testing.M) {
+	if logPath := os.Getenv("WHALESHELL_FAKE_DOCKER_LOG"); logPath != "" {
+		args := os.Args[1:]
+		f, err := os.OpenFile(logPath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0o600)
+		if err != nil {
+			os.Exit(1)
+		}
+		_, err = fmt.Fprintln(f, strings.Join(args, " "))
+		if closeErr := f.Close(); err != nil || closeErr != nil {
+			os.Exit(1)
+		}
+		switch {
+		case len(args) >= 2 && args[0] == "volume" && args[1] == "ls":
+			fmt.Print("anonymous-a\nanonymous-b\n")
+		case len(args) >= 2 && args[0] == "ps" && args[1] == "-aq":
+			fmt.Print("container-a\n")
+		}
+		os.Exit(0)
 	}
+	os.Exit(m.Run())
+}
 
+func TestCleanupDockerTestResourcesIsScopedAndDryRunByDefault(t *testing.T) {
 	binDir := t.TempDir()
 	logPath := filepath.Join(t.TempDir(), "docker.log")
-	docker := filepath.Join(binDir, "docker")
-	script := `#!/bin/sh
-printf '%s\n' "$*" >> "$WHALESHELL_FAKE_DOCKER_LOG"
-case "$1 $2" in
-  "volume ls") printf 'anonymous-a\nanonymous-b\n' ;;
-  "ps -aq") printf 'container-a\n' ;;
-esac
-`
-	if err := os.WriteFile(docker, []byte(script), 0o700); err != nil {
+	source, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	input, err := os.Open(source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer input.Close()
+	docker := filepath.Join(binDir, dockerTestExecutableName())
+	output, err := os.OpenFile(docker, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0o700)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := io.Copy(output, input); err != nil {
+		_ = output.Close()
+		t.Fatal(err)
+	}
+	if err := output.Close(); err != nil {
 		t.Fatal(err)
 	}
 	t.Setenv("PATH", binDir+string(os.PathListSeparator)+os.Getenv("PATH"))

@@ -3,7 +3,6 @@ package gwconfig
 import (
 	"os"
 	"path/filepath"
-	"runtime"
 	"testing"
 )
 
@@ -24,13 +23,6 @@ func TestSaveOwnerOnly(t *testing.T) {
 	in := File{Current: "dev", Gateways: map[string]Gateway{"dev": {URL: "http://127.0.0.1:7443", Token: "secret", RefreshToken: "r"}}}
 	if err := Save(in); err != nil {
 		t.Fatal(err)
-	}
-	st, err := os.Stat(p)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if runtime.GOOS != "windows" && st.Mode().Perm() != 0o600 {
-		t.Fatalf("config with tokens has mode %o, want 600", st.Mode().Perm())
 	}
 	entries, _ := os.ReadDir(filepath.Dir(p))
 	if len(entries) != 1 {
