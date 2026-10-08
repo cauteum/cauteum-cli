@@ -526,7 +526,7 @@ jobs:
                    cauteum-proxy cauteum-runtime cauteum-sdk slogx; do
             git clone --depth 1 "https://github.com/cauteum/${m}.git" "${m}"
           done
-          git clone --depth 1 --branch release/v0.1.0-alpha.2 \
+          git clone --depth 1 --branch main \
             https://github.com/cauteum/cauteum-gateway.git cauteum-gateway
 
       - name: Write go.work
