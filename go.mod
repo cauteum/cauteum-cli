@@ -7,11 +7,11 @@ require (
 	github.com/cauteum/cauteum-core v0.1.0-beta.1.0.20261008213715-9b32ff965bef
 	github.com/cauteum/cauteum-display v0.1.0-alpha.2.0.20261008214133-e082e41bf28a
 	github.com/cauteum/cauteum-driver v0.1.0-beta.1.0.20261008214530-d244c3ac7e41
-	github.com/cauteum/cauteum-gateway v0.1.0-beta.1.0.20261008214653-dd3919db019f
+	github.com/cauteum/cauteum-gateway v0.1.0-beta.1.0.20261008215254-5e20fa2f6943
 	github.com/cauteum/cauteum-providers v0.1.0-alpha.2.0.20261008214532-1b3297f6bfe9
 	github.com/cauteum/cauteum-proxy v0.1.0-beta.1.0.20261008214534-e0620208414a
 	github.com/cauteum/cauteum-runtime v0.1.0-beta.1.0.20261008214610-c965139e3cb4
-	github.com/cauteum/cauteum-sdk v0.1.0-alpha.2.0.20261008214716-843102c554b2
+	github.com/cauteum/cauteum-sdk v0.1.0-alpha.2.0.20261008215328-319fb095aa53
 	github.com/cauteum/slogx v0.1.0-alpha.2.0.20261008213740-b3c4da34847b
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
