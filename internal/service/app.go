@@ -21,28 +21,28 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/whaleshell/slogx"
-	"github.com/whaleshell/whaleshell-cli/internal/autoprovider"
-	"github.com/whaleshell/whaleshell-cli/internal/logger"
-	"github.com/whaleshell/whaleshell-cli/internal/osargs"
-	"github.com/whaleshell/whaleshell-cli/internal/outfmt"
-	"github.com/whaleshell/whaleshell-cli/internal/policywait"
-	"github.com/whaleshell/whaleshell-cli/internal/storage/gwconfig"
-	"github.com/whaleshell/whaleshell-cli/internal/storage/templates"
-	"github.com/whaleshell/whaleshell-cli/internal/ui"
-	"github.com/whaleshell/whaleshell-core/defaults"
-	"github.com/whaleshell/whaleshell-core/engine"
-	"github.com/whaleshell/whaleshell-core/env"
-	"github.com/whaleshell/whaleshell-core/policy"
-	display "github.com/whaleshell/whaleshell-display"
-	"github.com/whaleshell/whaleshell-driver/driver"
-	_ "github.com/whaleshell/whaleshell-driver/driver/all"
-	"github.com/whaleshell/whaleshell-proxy/proxy"
-	"github.com/whaleshell/whaleshell-runtime/inference"
-	"github.com/whaleshell/whaleshell-runtime/relayclient"
-	"github.com/whaleshell/whaleshell-runtime/sandbox"
-	"github.com/whaleshell/whaleshell-runtime/secrets"
-	"github.com/whaleshell/whaleshell-sdk/go/whaleshell"
+	"github.com/cauteum/cauteum-cli/internal/autoprovider"
+	"github.com/cauteum/cauteum-cli/internal/logger"
+	"github.com/cauteum/cauteum-cli/internal/osargs"
+	"github.com/cauteum/cauteum-cli/internal/outfmt"
+	"github.com/cauteum/cauteum-cli/internal/policywait"
+	"github.com/cauteum/cauteum-cli/internal/storage/gwconfig"
+	"github.com/cauteum/cauteum-cli/internal/storage/templates"
+	"github.com/cauteum/cauteum-cli/internal/ui"
+	"github.com/cauteum/cauteum-core/defaults"
+	"github.com/cauteum/cauteum-core/engine"
+	"github.com/cauteum/cauteum-core/env"
+	"github.com/cauteum/cauteum-core/policy"
+	display "github.com/cauteum/cauteum-display"
+	"github.com/cauteum/cauteum-driver/driver"
+	_ "github.com/cauteum/cauteum-driver/driver/all"
+	"github.com/cauteum/cauteum-proxy/proxy"
+	"github.com/cauteum/cauteum-runtime/inference"
+	"github.com/cauteum/cauteum-runtime/relayclient"
+	"github.com/cauteum/cauteum-runtime/sandbox"
+	"github.com/cauteum/cauteum-runtime/secrets"
+	"github.com/cauteum/cauteum-sdk/go/cauteum"
+	"github.com/cauteum/slogx"
 	"golang.org/x/term"
 	"gopkg.in/yaml.v3"
 )
@@ -123,14 +123,14 @@ func selectedDriver() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	selected := strings.ToLower(strings.TrimSpace(os.Getenv("WHALESHELL_DRIVER")))
+	selected := strings.ToLower(strings.TrimSpace(os.Getenv("CAUTEUM_DRIVER")))
 	if selected != "" {
 		selected = normalizeSelectedDriver(selected)
 		if selected != "docker" && selected != "podman" && selected != "vm" && selected != "kubernetes" {
-			return "", fmt.Errorf("unsupported WHALESHELL_DRIVER %q", selected)
+			return "", fmt.Errorf("unsupported CAUTEUM_DRIVER %q", selected)
 		}
 		if len(configured) > 0 && !slices.Contains(configured, selected) {
-			return "", fmt.Errorf("WHALESHELL_DRIVER %q is not selected by openshell.gateway.compute_drivers", selected)
+			return "", fmt.Errorf("CAUTEUM_DRIVER %q is not selected by openshell.gateway.compute_drivers", selected)
 		}
 		return selected, nil
 	}
@@ -143,7 +143,7 @@ func selectedDriver() (string, error) {
 	if slices.Contains(configured, "docker") {
 		return "docker", nil
 	}
-	return "", fmt.Errorf("multiple compute drivers are configured; set WHALESHELL_DRIVER to one of: %s", strings.Join(configured, ", "))
+	return "", fmt.Errorf("multiple compute drivers are configured; set CAUTEUM_DRIVER to one of: %s", strings.Join(configured, ", "))
 }
 
 func normalizeSelectedDriver(selected string) string {
@@ -166,15 +166,15 @@ func envTruthy(key string) bool {
 
 // Banner is the short CLI intro.
 func (a *App) Banner() string {
-	return "whaleshell — agent sandbox CLI"
+	return "cauteum — agent sandbox CLI"
 }
 
 // Version reports the CLI stub version.
 // BuildVersion is set at release time:
-// -ldflags "-X github.com/whaleshell/whaleshell-cli/internal/service.BuildVersion=…".
+// -ldflags "-X github.com/cauteum/cauteum-cli/internal/service.BuildVersion=…".
 var BuildVersion = "0.1.0-alpha.1"
 
-func (a *App) Version() string { return "whaleshell " + BuildVersion }
+func (a *App) Version() string { return "cauteum " + BuildVersion }
 
 // Health probes Docker Engine / Podman API.
 func (a *App) Health() error {
@@ -182,7 +182,7 @@ func (a *App) Health() error {
 		hint := "check DOCKER_HOST / Docker Desktop"
 		switch a.DriverName {
 		case "podman":
-			hint = "check WHALESHELL_PODMAN_SOCKET / podman.socket (systemctl --user start podman.socket)"
+			hint = "check CAUTEUM_PODMAN_SOCKET / podman.socket (systemctl --user start podman.socket)"
 		case "vm":
 			return fmt.Errorf("health: vm driver is a spike stub (see docs/exp/MICROVM.md)")
 		case "kubernetes":
@@ -236,10 +236,10 @@ func (a *App) Health() error {
 			}
 		}
 	} else {
-		fmt.Printf("  gateway:          not selected (whaleshell gateway ensure)\n")
+		fmt.Printf("  gateway:          not selected (cauteum gateway ensure)\n")
 	}
-	if envTruthy("WHALESHELL_LANDLOCK_REQUIRED") && !landlockABIAtLeast(probe, 1) {
-		return fmt.Errorf("health: landlock gate failed (need ABI≥1; got %s). Unset WHALESHELL_LANDLOCK_REQUIRED on Docker Desktop / ABI 0 hosts", probe)
+	if envTruthy("CAUTEUM_LANDLOCK_REQUIRED") && !landlockABIAtLeast(probe, 1) {
+		return fmt.Errorf("health: landlock gate failed (need ABI≥1; got %s). Unset CAUTEUM_LANDLOCK_REQUIRED on Docker Desktop / ABI 0 hosts", probe)
 	}
 	return nil
 }
@@ -265,7 +265,7 @@ func (a *App) Doctor() error {
 	}
 	u, err := a.currentGatewayURL()
 	if err != nil || u == "" {
-		return fmt.Errorf("doctor: no gateway selected (whaleshell gateway ensure|add|select)")
+		return fmt.Errorf("doctor: no gateway selected (cauteum gateway ensure|add|select)")
 	}
 	ctx, cancel := a.withTimeout(TimeoutAPIShort)
 	defer cancel()
@@ -296,7 +296,7 @@ func (a *App) Doctor() error {
 }
 
 // CleanupDockerTestResources removes only disposable resources created by the
-// Testcontainers/Whaleshell test lanes. It deliberately does not use
+// Testcontainers/Cauteum test lanes. It deliberately does not use
 // `docker system prune`: named volumes, running containers and user networks
 // are outside this command's scope.
 type CleanupReport struct {
@@ -327,7 +327,7 @@ func (a *App) CleanupDockerTestResources(ctx context.Context, confirm bool) erro
 	if err != nil {
 		return err
 	}
-	containers, err := list("ps", "-aq", "--filter", "label=whaleshell=1", "--filter", "status=exited")
+	containers, err := list("ps", "-aq", "--filter", "label=cauteum=1", "--filter", "status=exited")
 	if err != nil {
 		return err
 	}
@@ -441,7 +441,7 @@ func (a *App) PolicyGlobalGet() error {
 	if err != nil {
 		return err
 	}
-	b, err := whaleshell.NewWithToken(u, a.gatewayTokenForURL(u)).GetGlobalPolicy(a.apiCtx())
+	b, err := cauteum.NewWithToken(u, a.gatewayTokenForURL(u)).GetGlobalPolicy(a.apiCtx())
 	if err != nil {
 		return err
 	}
@@ -469,7 +469,7 @@ func (a *App) PolicyGlobalSet(path string) error {
 	if err := doc.Validate(); err != nil {
 		return err
 	}
-	if err := whaleshell.NewWithToken(u, a.gatewayTokenForURL(u)).PutGlobalPolicy(a.apiCtx(), b); err != nil {
+	if err := cauteum.NewWithToken(u, a.gatewayTokenForURL(u)).PutGlobalPolicy(a.apiCtx(), b); err != nil {
 		return err
 	}
 	fmt.Printf("policy global set: ok url=%s bytes=%d\n", u, len(b))
@@ -482,7 +482,7 @@ func (a *App) PolicyGlobalClear() error {
 	if err != nil {
 		return err
 	}
-	if err := whaleshell.NewWithToken(u, a.gatewayTokenForURL(u)).PutGlobalPolicy(a.apiCtx(), nil); err != nil {
+	if err := cauteum.NewWithToken(u, a.gatewayTokenForURL(u)).PutGlobalPolicy(a.apiCtx(), nil); err != nil {
 		return err
 	}
 	fmt.Println("policy delete --global: ok")
@@ -518,7 +518,7 @@ func (a *App) PolicySet(sandboxName, path string, wait bool) error {
 	var appliedBytes []byte
 
 	if gw, err := a.currentGatewayURL(); err == nil && gw != "" {
-		c := whaleshell.NewWithToken(gw, a.gatewayTokenForURL(gw))
+		c := cauteum.NewWithToken(gw, a.gatewayTokenForURL(gw))
 		ctx, cancel := a.withTimeout(TimeoutAPILong)
 		defer cancel()
 		if _, err := c.Healthz(ctx); err == nil {
@@ -540,7 +540,7 @@ func (a *App) PolicySet(sandboxName, path string, wait bool) error {
 			if a.Docker != nil {
 				hostPath, err := a.Docker.PolicyHostPath(ctx, sandboxName)
 				if err != nil {
-					return fmt.Errorf("policy set: gateway stored base, but live bind: %w (run: whaleshell provider effective %s | …)", err, sandboxName)
+					return fmt.Errorf("policy set: gateway stored base, but live bind: %w (run: cauteum provider effective %s | …)", err, sandboxName)
 				}
 				if err := writeFileInPlace(hostPath, eff); err != nil {
 					return fmt.Errorf("policy set: write %s: %w", hostPath, err)
@@ -650,7 +650,7 @@ func (a *App) PolicyUpdate(sandbox string, endpoints, allows, denies, binaries [
 	if err != nil {
 		return err
 	}
-	tmp, err := os.CreateTemp("", "whaleshell-policy-update-*.yaml")
+	tmp, err := os.CreateTemp("", "cauteum-policy-update-*.yaml")
 	if err != nil {
 		return err
 	}
@@ -764,7 +764,7 @@ func (a *App) mergeGatewayGlobal(doc policy.Document) (policy.Document, error) {
 	if err != nil || u == "" {
 		return doc, nil
 	}
-	b, err := whaleshell.NewWithToken(u, a.gatewayTokenForURL(u)).GetGlobalPolicy(a.apiCtx())
+	b, err := cauteum.NewWithToken(u, a.gatewayTokenForURL(u)).GetGlobalPolicy(a.apiCtx())
 	if err != nil || len(bytesTrim(b)) == 0 {
 		return doc, nil
 	}
@@ -817,7 +817,7 @@ type SandboxCreateOpts struct {
 	DisplayPort    int
 	OpenDisplay    bool
 	Labels         map[string]string
-	NoHostInternal bool // skip host.whaleshell.internal ExtraHosts
+	NoHostInternal bool // skip host.cauteum.internal ExtraHosts
 	GatewayURL     string
 	From           string // BYOC / community image alias
 	NoVolume       bool   // skip persist GuestData volume (default: persist)
@@ -904,7 +904,7 @@ func (a *App) SandboxCreate(opt SandboxCreateOpts) error {
 		}
 	}
 	if gwURL == "" && (!opt.NoProxy || len(opt.Providers) > 0) {
-		return fmt.Errorf("sandbox create: gateway required for proxy/providers (whaleshell gateway ensure)")
+		return fmt.Errorf("sandbox create: gateway required for proxy/providers (cauteum gateway ensure)")
 	}
 	if !opt.NoCredentialWarnings {
 		hints := map[string][]env.ProfileHint{}
@@ -948,7 +948,7 @@ func (a *App) SandboxCreate(opt SandboxCreateOpts) error {
 		if am != "manual" && am != "auto" {
 			return fmt.Errorf("sandbox create: --approval-mode must be manual|auto")
 		}
-		opt.Labels["whaleshell.approval-mode"] = am
+		opt.Labels["cauteum.approval-mode"] = am
 	}
 
 	spec := driver.Spec{
@@ -961,7 +961,7 @@ func (a *App) SandboxCreate(opt SandboxCreateOpts) error {
 		NoHarden:         opt.NoHarden,
 		Labels:           opt.Labels,
 		PersistVolume:    !opt.NoVolume,
-		GPU:              opt.GPU || envTruthy("WHALESHELL_GPU"),
+		GPU:              opt.GPU || envTruthy("CAUTEUM_GPU"),
 		CDIDevices:       append([]string{}, opt.CDIDevices...),
 		CPU:              opt.CPU,
 		PidsLimit:        opt.PidsLimit,
@@ -1043,7 +1043,7 @@ func (a *App) SandboxCreate(opt SandboxCreateOpts) error {
 		if b, err := os.ReadFile(basePath); err == nil {
 			baseYAML = string(b)
 		}
-		_ = cli.UpsertSandbox(ctx, whaleshell.Sandbox{
+		_ = cli.UpsertSandbox(ctx, cauteum.Sandbox{
 			Name:              h.Name,
 			ID:                string(h.ID),
 			Image:             h.Image,
@@ -1062,7 +1062,7 @@ func (a *App) SandboxCreate(opt SandboxCreateOpts) error {
 		notes = append(notes, "proxy=off")
 	}
 	if !opt.NoHarden {
-		notes = append(notes, "harden=whaleshell-init")
+		notes = append(notes, "harden=cauteum-init")
 	} else {
 		notes = append(notes, "harden=off")
 	}
@@ -1092,13 +1092,13 @@ func (a *App) SandboxCreate(opt SandboxCreateOpts) error {
 		}
 	}
 	if spec.EnableSSH {
-		fmt.Printf("ssh: via gateway relay (whaleshell sandbox connect %s | --editor cursor|vscode)\n", h.Name)
+		fmt.Printf("ssh: via gateway relay (cauteum sandbox connect %s | --editor cursor|vscode)\n", h.Name)
 	}
 	if spec.GPU {
 		fmt.Printf("gpu: CDI DeviceRequests enabled (see docs/exp/GPU.md)\n")
 	}
 	if !opt.NoVolume {
-		fmt.Printf("volume: whaleshell-data-%s → %s (retained across stop/start)\n", h.Name, defaults.GuestData)
+		fmt.Printf("volume: cauteum-data-%s → %s (retained across stop/start)\n", h.Name, defaults.GuestData)
 	}
 	if opt.Upload != "" {
 		dest := "/workspace/" + filepath.Base(opt.Upload)
@@ -1164,7 +1164,7 @@ func (a *App) SandboxList(opt SandboxListOpts) error {
 	}
 	ctx, cancel := a.withTimeout(TimeoutAPI)
 	defer cancel()
-	list, err := client.List(ctx)
+	list, err := client.ListControlSandboxes(ctx, a.GlobalWorkspace, opt.AllWorkspaces)
 	if err != nil {
 		return fmt.Errorf("sandbox list: %w", err)
 	}
@@ -1352,11 +1352,24 @@ func (a *App) ListSandboxes() ([]driver.Info, error) {
 
 // SandboxStatus prints one sandbox.
 func (a *App) SandboxStatus(nameOrID string) error {
+	ctx, cancel := a.withTimeout(TimeoutAPI)
+	defer cancel()
+	if gw, err := a.currentGatewayURL(); err == nil && gw != "" {
+		sandbox, err := cauteum.NewWithToken(gw, a.gatewayTokenForURL(gw)).GetControlSandbox(ctx, a.GlobalWorkspace, nameOrID)
+		if err != nil {
+			return fmt.Errorf("sandbox get: %w", err)
+		}
+		fmt.Printf("name:           %s\n", sandbox.Name)
+		fmt.Printf("id:             %s\n", sandbox.ID)
+		fmt.Printf("workspace:      %s\n", sandbox.Workspace)
+		fmt.Printf("registry_status: %s\n", sandbox.Status)
+		fmt.Printf("runtime_status:  unavailable\n")
+		fmt.Printf("image:          %s\n", sandbox.Image)
+		return nil
+	}
 	if a.Sandboxes == nil || a.Sandboxes.Driver == nil {
 		return fmt.Errorf("sandbox status: docker not available")
 	}
-	ctx, cancel := a.withTimeout(TimeoutAPI)
-	defer cancel()
 	info, err := a.Sandboxes.Driver.Inspect(ctx, nameOrID)
 	if err != nil {
 		return err
@@ -1419,7 +1432,7 @@ func (a *App) LogsOpts(opt LogsOpts) error {
 	return a.LogsToOpts(a.CommandContext(), opt, os.Stdout)
 }
 
-// LogsTo streams sandbox container logs to w (used by `whaleshell term` live observation panel).
+// LogsTo streams sandbox container logs to w (used by `cauteum term` live observation panel).
 func (a *App) LogsTo(ctx context.Context, name string, follow bool, w io.Writer) error {
 	return a.LogsToOpts(ctx, LogsOpts{Names: []string{name}, Follow: follow}, w)
 }
@@ -1433,48 +1446,66 @@ func (a *App) LogsToOpts(ctx context.Context, opt LogsOpts, w io.Writer) error {
 		ctx = a.CommandContext()
 	}
 	names := opt.Names
-	if opt.All {
-		list, err := a.ListSandboxes()
-		if err == nil {
-			names = nil
-			for _, s := range list {
-				names = append(names, s.Name)
-			}
-		}
-	}
-	if len(names) == 0 {
+	if len(names) == 0 && !opt.All {
 		return fmt.Errorf("logs: no sandbox names")
 	}
-	// Prefer gateway SSE when available.
+	// Prefer the authorized workspace-scoped control API when a gateway is selected.
 	if gw, err := a.currentGatewayURL(); err == nil && gw != "" {
-		c := whaleshell.NewWithToken(gw, a.gatewayTokenForURL(gw))
+		c := cauteum.NewWithToken(gw, a.gatewayTokenForURL(gw))
 		if _, err := c.Healthz(ctx); err == nil {
-			if opt.Follow {
-				return c.FollowLogs(ctx, names, opt.All, opt.Since, opt.Source, opt.Level, w)
-			}
-			// snapshot each; if gateway has nothing yet, fall through to docker
-			var any bool
-			for _, n := range names {
-				lines, err := c.GetLogsSnapshot(ctx, n, opt.Since, opt.Source, opt.Level)
+			var sandboxes []cauteum.Sandbox
+			if opt.All {
+				sandboxes, err = c.ListControlSandboxes(ctx, "", true)
 				if err != nil {
-					continue
+					return fmt.Errorf("logs: list visible sandboxes: %w", err)
 				}
-				for _, ln := range lines {
-					any = true
-					prefix := n
-					if len(names) == 1 {
-						prefix = ln.Source
+			} else {
+				workspace := a.GlobalWorkspace
+				if workspace == "" {
+					workspace = "default"
+				}
+				sandboxes = make([]cauteum.Sandbox, 0, len(names))
+				for _, name := range names {
+					sandboxes = append(sandboxes, cauteum.Sandbox{Name: name, Workspace: workspace})
+				}
+			}
+			if opt.Follow {
+				return c.WatchControlSandboxSet(ctx, sandboxes, 200, opt.Since, opt.Source, opt.Level, w)
+			}
+			for _, sandbox := range sandboxes {
+				lines, err := c.GetControlSandboxLogsFiltered(ctx, sandbox.Workspace, sandbox.Name, 500, opt.Since, opt.Source, opt.Level)
+				if err != nil {
+					return fmt.Errorf("logs: workspace %q sandbox %q: %w", sandbox.Workspace, sandbox.Name, err)
+				}
+				for _, line := range lines {
+					prefix := sandbox.Name
+					if opt.All {
+						prefix = sandbox.Workspace + "/" + sandbox.Name
+					}
+					if len(sandboxes) == 1 {
+						prefix = line.Source
 						if prefix == "" {
 							prefix = "proxy"
 						}
 					}
-					fmt.Fprintf(w, "[%s] %s\n", prefix, ln.Text)
+					fmt.Fprintf(w, "[%s] %s\n", prefix, line.Text)
 				}
 			}
-			if any {
-				return nil
-			}
+			return nil
 		}
+	}
+	if opt.All {
+		list, err := a.ListSandboxes()
+		if err != nil {
+			return err
+		}
+		names = make([]string, 0, len(list))
+		for _, sandbox := range list {
+			names = append(names, sandbox.Name)
+		}
+	}
+	if len(names) == 0 {
+		return fmt.Errorf("logs: no sandbox names")
 	}
 	// Docker fallback.
 	if a.Sandboxes == nil || a.Sandboxes.Driver == nil {
@@ -1533,7 +1564,7 @@ func (a *App) GatewayAdd(name, url string) error {
 func (a *App) GatewayAddParsed(parsed osargs.GatewayAdd) error {
 	name, url := parsed.Name, parsed.Endpoint
 	if name == "" || url == "" {
-		return fmt.Errorf("usage: whaleshell gateway add <endpoint> [--name NAME] [--local] [--oidc-issuer URL]")
+		return fmt.Errorf("usage: cauteum gateway add <endpoint> [--name NAME] [--local] [--oidc-issuer URL]")
 	}
 	cfg, path, err := gwconfig.Load()
 	if err != nil {
@@ -1567,7 +1598,7 @@ func (a *App) GatewayAddParsed(parsed osargs.GatewayAdd) error {
 	fmt.Printf("gateway add: ok name=%s url=%s config=%s\n", name, url, path)
 	if g.OIDCIssuer != "" {
 		fmt.Printf("gateway add: oidc issuer=%s client_id=%s\n", g.OIDCIssuer, g.OIDCClientID)
-		fmt.Printf("gateway add: run `whaleshell gateway login` for Authorization Code + PKCE\n")
+		fmt.Printf("gateway add: run `cauteum gateway login` for Authorization Code + PKCE\n")
 	}
 	return nil
 }
@@ -1625,7 +1656,7 @@ func (a *App) GatewayListRemote() error {
 	}
 	u := gwconfig.CurrentURL(cfg)
 	if u == "" {
-		return fmt.Errorf("gateway list: no current gateway (whaleshell gateway add …)")
+		return fmt.Errorf("gateway list: no current gateway (cauteum gateway add …)")
 	}
 	ctx, cancel := a.withTimeout(TimeoutAPI)
 	defer cancel()
@@ -1642,7 +1673,7 @@ func (a *App) GatewayListRemote() error {
 	return nil
 }
 
-// ExecOpts for whaleshell sandbox exec.
+// ExecOpts for cauteum sandbox exec.
 type ExecOpts struct {
 	Name    string
 	Argv    []string
@@ -1661,7 +1692,7 @@ func (a *App) Exec(opt ExecOpts) error {
 		return err
 	}
 	if opt.Name == "" || len(opt.Argv) == 0 {
-		return fmt.Errorf("usage: whaleshell sandbox exec [--name] <name> [--workdir DIR] [--env K=V] -- CMD")
+		return fmt.Errorf("usage: cauteum sandbox exec [--name] <name> [--workdir DIR] [--env K=V] -- CMD")
 	}
 	log.Info("executing in sandbox", slog.Bool("tty", opt.TTY))
 	// Always overlay credential placeholders from effective policy so attach/refresh
@@ -1707,15 +1738,15 @@ func (a *App) emitProc(sandbox, activity, details string, exitCode int) {
 	if activity == "EXIT" {
 		text = fmt.Sprintf("%s OCSF PROC:EXIT [INFO] ALLOWED %s [exit:%d]", ts.Format(time.RFC3339Nano), details, exitCode)
 	}
-	c := whaleshell.NewWithToken(gw, a.gatewayTokenForURL(gw))
+	c := cauteum.NewWithToken(gw, a.gatewayTokenForURL(gw))
 	ctx, cancel := a.withTimeout(TimeoutEmit)
 	defer cancel()
-	_ = c.PostLogs(ctx, sandbox, []whaleshell.LogLine{{
+	_ = c.PostLogs(ctx, sandbox, []cauteum.LogLine{{
 		TS: ts, Source: "proc", Level: "INFO", Text: text,
 	}})
 }
 
-// RunOpts for whaleshell run (ensure sandbox + exec).
+// RunOpts for cauteum run (ensure sandbox + exec).
 type RunOpts struct {
 	Name        string
 	Image       string
@@ -1849,12 +1880,12 @@ type ProxyOpts struct {
 	LogDir     string // optional daily OCSF file dir (default /var/log)
 }
 
-// Proxy runs whaleshell-proxy until interrupted.
+// Proxy runs cauteum-proxy until interrupted.
 func (a *App) Proxy(opt ProxyOpts) error {
 	const op = "proxy.serve"
 	ctx, cancel := a.withCancel()
 	defer cancel()
-	log := logger.Setup(ctx, logger.Options{Service: "whaleshell-proxy"})
+	log := logger.Setup(ctx, logger.Options{Service: "cauteum-proxy"})
 	ctx = logger.ToContext(ctx, log)
 	log = log.With("op", op)
 
@@ -1877,26 +1908,26 @@ func (a *App) Proxy(opt ProxyOpts) error {
 	}
 	logDir := opt.LogDir
 	if logDir == "" {
-		logDir = os.Getenv("WHALESHELL_LOG_DIR")
+		logDir = os.Getenv("CAUTEUM_LOG_DIR")
 	}
 	if logDir == "" {
 		logDir = "/var/log"
 	}
 	gwURL := opt.GatewayURL
 	if gwURL == "" {
-		gwURL = os.Getenv("WHALESHELL_GATEWAY_URL")
+		gwURL = os.Getenv("CAUTEUM_GATEWAY_URL")
 	}
 	sandbox := opt.Sandbox
 	if sandbox == "" {
-		sandbox = os.Getenv("WHALESHELL_SANDBOX")
+		sandbox = os.Getenv("CAUTEUM_SANDBOX")
 	}
-	// OpenShell-style: WHALESHELL_GATEWAY_URL must resolve via ExtraHosts
-	// (host.whaleshell.internal → host-gateway). No hostname guessing.
-	var gw *whaleshell.Client
+	// OpenShell-style: CAUTEUM_GATEWAY_URL must resolve via ExtraHosts
+	// (host.cauteum.internal → host-gateway). No hostname guessing.
+	var gw *cauteum.Client
 	var pusher proxy.LogPusher
 	if gwURL != "" && sandbox != "" {
 		gwURL = GuestGatewayURL(gwURL)
-		gw = whaleshell.NewWithToken(gwURL, sandboxToken)
+		gw = cauteum.NewWithToken(gwURL, sandboxToken)
 		pusher = gatewayAuditPusher{c: gw}
 		if sandboxToken == "" {
 			log.Warn("no sandbox supervisor token; gateway calls will be rejected", "env", EnvSandboxToken)
@@ -1916,7 +1947,7 @@ func (a *App) Proxy(opt ProxyOpts) error {
 			defer cancel()
 			return relayclient.ReportPolicyStatus(callCtx, relayclient.Config{
 				GatewayURL:          gwURL,
-				GatewayGRPCEndpoint: strings.TrimSpace(os.Getenv("WHALESHELL_GATEWAY_GRPC_ENDPOINT")),
+				GatewayGRPCEndpoint: strings.TrimSpace(os.Getenv("CAUTEUM_GATEWAY_GRPC_ENDPOINT")),
 				Sandbox:             sandbox,
 				Token:               sandboxToken,
 				TLSConfig:           policyTLSConfig,
@@ -1951,8 +1982,8 @@ func (a *App) Proxy(opt ProxyOpts) error {
 		go func() {
 			_ = relayclient.Run(ctx, relayclient.Config{
 				GatewayURL:              gwURL,
-				GatewayGRPCEndpoint:     strings.TrimSpace(os.Getenv("WHALESHELL_GATEWAY_GRPC_ENDPOINT")),
-				SupervisorControlSocket: strings.TrimSpace(os.Getenv("WHALESHELL_SUPERVISOR_CONTROL_SOCKET")),
+				GatewayGRPCEndpoint:     strings.TrimSpace(os.Getenv("CAUTEUM_GATEWAY_GRPC_ENDPOINT")),
+				SupervisorControlSocket: strings.TrimSpace(os.Getenv("CAUTEUM_SUPERVISOR_CONTROL_SOCKET")),
 				Sandbox:                 sandbox,
 				Token:                   sandboxToken,
 				SSHSocket:               sock,
@@ -1979,7 +2010,7 @@ func (a *App) Proxy(opt ProxyOpts) error {
 	return srv.ListenAndServe(ctx, listen)
 }
 
-func (a *App) refreshProxySecrets(srv *proxy.Server, c *whaleshell.Client, sandbox string) error {
+func (a *App) refreshProxySecrets(srv *proxy.Server, c *cauteum.Client, sandbox string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), TimeoutAPIShort)
 	defer cancel()
 	m, err := c.ResolveSecrets(ctx, sandbox)
@@ -2033,7 +2064,7 @@ func gatewayProxySecretSnapshot(environment, gateway map[string]string, managed 
 }
 
 // GuestGatewayURL rewrites loopback (and legacy host.docker.internal) gateway URLs
-// to host.whaleshell.internal — the OpenShell-style host-gateway alias injected via ExtraHosts.
+// to host.cauteum.internal — the OpenShell-style host-gateway alias injected via ExtraHosts.
 func GuestGatewayURL(gwURL string) string {
 	raw := strings.TrimSpace(gwURL)
 	u, err := url.Parse(raw)
@@ -2053,16 +2084,16 @@ func GuestGatewayURL(gwURL string) string {
 
 // gatewayAuditPusher adapts SDK client to proxy.LogPusher.
 type gatewayAuditPusher struct {
-	c *whaleshell.Client
+	c *cauteum.Client
 }
 
 func (g gatewayAuditPusher) PostLogs(ctx context.Context, sandbox string, lines []proxy.AuditLine) error {
 	if g.c == nil || len(lines) == 0 {
 		return nil
 	}
-	out := make([]whaleshell.LogLine, len(lines))
+	out := make([]cauteum.LogLine, len(lines))
 	for i, l := range lines {
-		out[i] = whaleshell.LogLine{TS: l.TS, Source: l.Source, Level: l.Level, Text: l.Text}
+		out[i] = cauteum.LogLine{TS: l.TS, Source: l.Source, Level: l.Level, Text: l.Text}
 	}
 	return g.c.PostLogs(ctx, sandbox, out)
 }
@@ -2077,7 +2108,7 @@ func hostEnvForPolicy(doc policy.Document) []string {
 	return out
 }
 
-// credentialPlaceholdersForSandbox returns whaleshell:resolve:env placeholders for the
+// credentialPlaceholdersForSandbox returns cauteum:resolve:env placeholders for the
 // sandbox effective policy credential keys (and attached provider guest keys).
 // Profiles with inject_env: false (Cursor) are skipped — Agent validates the key
 // client-side and rejects placeholders.
@@ -2188,16 +2219,16 @@ func proxySecretsForPolicy(doc policy.Document) []string {
 
 // EnvSandboxToken carries the sandbox-scoped supervisor token into the proxy
 // sidecar only (never the sandbox container).
-const EnvSandboxToken = "WHALESHELL_SANDBOX_TOKEN"
+const EnvSandboxToken = "CAUTEUM_SANDBOX_TOKEN"
 
 // EnvSSHSocket is set by the driver when the sidecar shares the sshd socket.
-const EnvSSHSocket = "WHALESHELL_SSH_SOCKET"
-const EnvTargetDialSocket = "WHALESHELL_TCP_DIAL_SOCKET"
+const EnvSSHSocket = "CAUTEUM_SSH_SOCKET"
+const EnvTargetDialSocket = "CAUTEUM_TCP_DIAL_SOCKET"
 
-// proxyGatewayEnv adds WHALESHELL_GATEWAY_URL / WHALESHELL_SANDBOX /
-// WHALESHELL_SANDBOX_TOKEN so the sidecar can resolve encrypted provider
+// proxyGatewayEnv adds CAUTEUM_GATEWAY_URL / CAUTEUM_SANDBOX /
+// CAUTEUM_SANDBOX_TOKEN so the sidecar can resolve encrypted provider
 // secrets, push OCSF logs and run the supervisor relay (OpenShell-like).
-// When an inference route is configured, also inject WHALESHELL_INFERENCE_* for inference.local.
+// When an inference route is configured, also inject CAUTEUM_INFERENCE_* for inference.local.
 func (a *App) proxyGatewayEnv(sandbox, gwURL, sandboxToken string) []string {
 	var out []string
 	if gwURL == "" {
@@ -2209,19 +2240,19 @@ func (a *App) proxyGatewayEnv(sandbox, gwURL, sandboxToken string) []string {
 		return out
 	}
 	guestGW := GuestGatewayURL(gwURL)
-	out = append(out, "WHALESHELL_GATEWAY_URL="+guestGW)
+	out = append(out, "CAUTEUM_GATEWAY_URL="+guestGW)
 	if sandbox != "" {
-		out = append(out, "WHALESHELL_SANDBOX="+sandbox)
+		out = append(out, "CAUTEUM_SANDBOX="+sandbox)
 	}
 	if sandboxToken != "" {
 		out = append(out, EnvSandboxToken+"="+sandboxToken)
 	}
-	out = append(out, "WHALESHELL_LOG_DIR=/var/log")
+	out = append(out, "CAUTEUM_LOG_DIR=/var/log")
 	out = append(out, inferenceProxyEnv(a.clientFor(gwURL))...)
 	return out
 }
 
-func inferenceProxyEnv(c *whaleshell.Client) []string {
+func inferenceProxyEnv(c *cauteum.Client) []string {
 	ctx, cancel := context.WithTimeout(context.Background(), TimeoutAPIShort)
 	defer cancel()
 	route, err := c.GetInference(ctx)
@@ -2229,24 +2260,24 @@ func inferenceProxyEnv(c *whaleshell.Client) []string {
 		return nil
 	}
 	out := []string{
-		"WHALESHELL_INFERENCE_MODEL=" + route.Model,
-		fmt.Sprintf("WHALESHELL_INFERENCE_TIMEOUT=%d", route.TimeoutSec),
+		"CAUTEUM_INFERENCE_MODEL=" + route.Model,
+		fmt.Sprintf("CAUTEUM_INFERENCE_TIMEOUT=%d", route.TimeoutSec),
 	}
 	if up := inferenceUpstreamForType(route.Provider, c, ctx); up != "" {
-		out = append(out, "WHALESHELL_INFERENCE_UPSTREAM="+up)
+		out = append(out, "CAUTEUM_INFERENCE_UPSTREAM="+up)
 	}
 	rec, err := c.GetProvider(ctx, route.Provider)
 	if err == nil && len(rec.EnvVars) > 0 {
 		// Prefer first credential key from host env at create time (sidecar also refreshes via gateway).
 		if v, ok := os.LookupEnv(rec.EnvVars[0]); ok && v != "" {
-			out = append(out, "WHALESHELL_INFERENCE_API_KEY="+v)
+			out = append(out, "CAUTEUM_INFERENCE_API_KEY="+v)
 		}
 	}
 	return out
 }
 
 type providerReader interface {
-	GetProvider(context.Context, string) (whaleshell.ProviderRecord, error)
+	GetProvider(context.Context, string) (cauteum.ProviderRecord, error)
 }
 
 func inferenceUpstreamForType(providerName string, c providerReader, ctx context.Context) string {
@@ -2296,7 +2327,7 @@ func (a *App) loadOrDenyAll(path string) (policy.Document, string, error) {
 		}
 		return doc, abs, nil
 	}
-	dir, err := os.MkdirTemp("", "whaleshell-policy-*")
+	dir, err := os.MkdirTemp("", "cauteum-policy-*")
 	if err != nil {
 		return policy.Document{}, "", err
 	}
@@ -2312,7 +2343,7 @@ func (a *App) loadOrDenyAll(path string) (policy.Document, string, error) {
 	return doc, abs, nil
 }
 
-// InitOpts for `whaleshell init --agent …`.
+// InitOpts for `cauteum init --agent …`.
 type InitOpts struct {
 	Agent string
 	Dir   string
@@ -2337,7 +2368,7 @@ func (a *App) Init(opt InitOpts) error {
 	default:
 		return fmt.Errorf("init: unknown agent %q (supported: cursor)", opt.Agent)
 	}
-	mod, err := findModuleDir("github.com/whaleshell/whaleshell-cli")
+	mod, err := findModuleDir("github.com/cauteum/cauteum-cli")
 	if err != nil {
 		return err
 	}
@@ -2358,8 +2389,8 @@ func (a *App) Init(opt InitOpts) error {
 		return err
 	}
 	fmt.Printf("init: wrote %s\n", dst)
-	fmt.Printf("next: whaleshell policy check %s\n", dst)
-	fmt.Printf("      whaleshell agent login %s\n", agent)
+	fmt.Printf("next: cauteum policy check %s\n", dst)
+	fmt.Printf("      cauteum agent login %s\n", agent)
 	return nil
 }
 
@@ -2382,7 +2413,7 @@ func (a *App) AgentLogin(name string) error {
 			return fmt.Errorf("agent login: set at least one of %s", strings.Join(keys, ", "))
 		}
 		fmt.Println("ok: use --provider cursor (and --provider github if needed) on sandbox create")
-		fmt.Println("docs: https://whaleshell.github.io/guides/cursor/")
+		fmt.Println("docs: https://cauteum.github.io/guides/cursor/")
 		return nil
 	default:
 		return fmt.Errorf("agent login: unknown agent %q (supported: cursor)", name)
@@ -2398,7 +2429,7 @@ func findModuleDir(modulePath string) (string, error) {
 		candidates = append(candidates, filepath.Dir(exe))
 	}
 	want := "module " + modulePath
-	short := strings.TrimPrefix(modulePath, "github.com/whaleshell/")
+	short := strings.TrimPrefix(modulePath, "github.com/cauteum/")
 	for _, start := range candidates {
 		dir := start
 		for range 8 {

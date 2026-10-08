@@ -1,34 +1,30 @@
 package service
 
 import (
-	"context"
 	"encoding/json"
-	"net/http"
-	"net/http/httptest"
 	"testing"
 
-	"github.com/whaleshell/whaleshell-proxy/proxy"
-	"github.com/whaleshell/whaleshell-sdk/go/whaleshell"
+	"github.com/cauteum/cauteum-providers/provider"
+	"github.com/cauteum/cauteum-proxy/proxy"
+	"github.com/cauteum/cauteum-sdk/go/cauteum"
 )
 
 func TestSandboxTokenGrantsPackagesAttachedProfileMetadata(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		switch r.URL.Path {
-		case "/v1/sandboxes/sb":
-			_, _ = w.Write([]byte(`{"name":"sb","workspace":"team","attached_providers":["corp"]}`))
-		case "/v1/providers/corp":
-			_, _ = w.Write([]byte(`{"name":"corp","type":"corp-api","workspace":"team"}`))
-		case "/v1/profiles/corp-api":
-			w.Header().Set("Content-Type", "application/yaml")
-			_, _ = w.Write([]byte(`{"source":"custom","profile":{"id":"corp-api","credentials":[{"name":"DYNAMIC_CREDENTIAL","env_vars":["DYNAMIC_TOKEN"],"token_grant":{"grant_type":"token_exchange","token_endpoint":"https://issuer.example/token","audience":"https://api.example.com","jwt_svid_audience":"https://issuer.example","scopes":["read"],"subject_token":{"source":"provider_credential","credential":"UPSTREAM_TOKEN"}}}]}}`))
-		default:
-			http.NotFound(w, r)
-		}
-	}))
-	defer server.Close()
-	c := whaleshell.NewWithToken(server.URL, "test")
-	raw := sandboxTokenGrants(context.Background(), c, "sb", server.URL)
+	sandbox := cauteum.Sandbox{AttachedProviders: []string{"corp"}}
+	providers := map[string]cauteum.ProviderRecord{
+		"corp": {Name: "corp", Type: "corp-api", Workspace: "team"},
+	}
+	profiles := map[string]provider.Profile{
+		"corp-api": {Credentials: []provider.Credential{{
+			Name: "DYNAMIC_CREDENTIAL", EnvVars: []string{"DYNAMIC_TOKEN"},
+			TokenGrant: &provider.TokenGrant{
+				GrantType: "token_exchange", TokenEndpoint: "https://issuer.example/token",
+				Audience: "https://api.example.com", JWTSVIDAudience: "https://issuer.example",
+				Scopes: []string{"read"}, SubjectToken: &provider.SubjectToken{Source: "provider_credential", Credential: "UPSTREAM_TOKEN"},
+			},
+		}}},
+	}
+	raw := encodeSandboxTokenGrants(sandbox, providers, profiles)
 	if raw == "" {
 		t.Fatal("expected grant metadata")
 	}

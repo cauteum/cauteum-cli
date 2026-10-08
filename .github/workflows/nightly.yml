@@ -1,4 +1,4 @@
-# SPDX-FileCopyrightText: Copyright (c) 2026 the whaleshell authors
+# SPDX-FileCopyrightText: Copyright (c) 2026 the cauteum authors
 # SPDX-License-Identifier: Apache-2.0
 #
 # Manual nightly multi-arch binaries → GitHub Release tag `nightly`.
@@ -24,30 +24,30 @@ jobs:
     name: Build & publish nightly
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout whaleshell-cli
+      - name: Checkout cauteum-cli
         uses: actions/checkout@v4
         with:
-          path: whaleshell-cli
+          path: cauteum-cli
           fetch-depth: 0
 
       - name: Checkout sibling modules
         run: |
           set -euo pipefail
           declare -A REMOTES=(
-            [whaleshell-core]=whaleshell/whaleshell-core
-            [whaleshell-display]=whaleshell/whaleshell-display
-            [whaleshell-driver]=whaleshell/whaleshell-driver
-            [whaleshell-providers]=whaleshell/whaleshell-providers
-            [whaleshell-proxy]=whaleshell/whaleshell-proxy
-            [whaleshell-runtime]=whaleshell/whaleshell-runtime
-            [whaleshell-sdk]=whaleshell/whaleshell-sdk
-            [whaleshell-gateway]=whaleshell/whaleshell-gateway
-            [slogx]=whaleshell/slogx
+            [cauteum-core]=cauteum/cauteum-core
+            [cauteum-display]=cauteum/cauteum-display
+            [cauteum-driver]=cauteum/cauteum-driver
+            [cauteum-providers]=cauteum/cauteum-providers
+            [cauteum-proxy]=cauteum/cauteum-proxy
+            [cauteum-runtime]=cauteum/cauteum-runtime
+            [cauteum-sdk]=cauteum/cauteum-sdk
+            [cauteum-gateway]=cauteum/cauteum-gateway
+            [slogx]=cauteum/slogx
           )
           for local in \
-            whaleshell-core whaleshell-display whaleshell-driver \
-            whaleshell-providers whaleshell-proxy whaleshell-runtime \
-            whaleshell-sdk whaleshell-gateway slogx
+            cauteum-core cauteum-display cauteum-driver \
+            cauteum-providers cauteum-proxy cauteum-runtime \
+            cauteum-sdk cauteum-gateway slogx
           do
             remote="${REMOTES[$local]}"
             if ! git clone --depth 1 --branch main \
@@ -64,22 +64,22 @@ jobs:
           {
             echo 'go 1.27.0'
             echo 'use ('
-            for d in whaleshell-* slogx; do
+            for d in cauteum-* slogx; do
               if [[ -d "$d" ]]; then
                 echo "  ./$d"
               fi
             done
             echo ')'
             echo 'replace ('
-            for d in whaleshell-*; do
+            for d in cauteum-*; do
               if [[ -d "$d" ]]; then
-                echo "  github.com/whaleshell/${d} v0.1.0-alpha.1 => ./$d"
-                echo "  github.com/whaleshell/${d} v0.1.0-alpha.2 => ./$d"
+                echo "  github.com/cauteum/${d} v0.1.0-alpha.1 => ./$d"
+                echo "  github.com/cauteum/${d} v0.1.0-alpha.2 => ./$d"
               fi
             done
             if [[ -d slogx ]]; then
-              echo '  github.com/whaleshell/slogx v0.1.0-alpha.1 => ./slogx'
-              echo '  github.com/whaleshell/slogx v0.1.0-alpha.2 => ./slogx'
+              echo '  github.com/cauteum/slogx v0.1.0-alpha.1 => ./slogx'
+              echo '  github.com/cauteum/slogx v0.1.0-alpha.2 => ./slogx'
             fi
             echo ')'
           } > "${{ github.workspace }}/go.work"
@@ -91,13 +91,13 @@ jobs:
           go-version: "1.27"
           cache: true
           cache-dependency-path: |
-            whaleshell-cli/go.sum
-            whaleshell-core/go.sum
-            whaleshell-runtime/go.sum
-            whaleshell-gateway/go.sum
+            cauteum-cli/go.sum
+            cauteum-core/go.sum
+            cauteum-runtime/go.sum
+            cauteum-gateway/go.sum
 
       - name: Cross-compile release matrix
-        working-directory: whaleshell-cli
+        working-directory: cauteum-cli
         run: |
           set -euo pipefail
           ver="0.0.0-nightly.$(date -u +%Y%m%d)+$(git rev-parse --short HEAD)"
@@ -122,20 +122,20 @@ jobs:
           helpers="${{ github.workspace }}/helpers"
           bash scripts/build-linux-helpers.sh "$ver" "$helpers" amd64 arm64
 
-          # Same layout as GoReleaser: whaleshell + libexec/whaleshell/linux-<arch>/.
+          # Same layout as GoReleaser: cauteum + libexec/cauteum/linux-<arch>/.
           build_cli() {
             local goos="$1" goarch="$2" ext="${3:-}"
-            local name="whaleshell_$(archive_os "$goos")_$(archive_arch "$goarch")"
+            local name="cauteum_$(archive_os "$goos")_$(archive_arch "$goarch")"
             local stage="${out}/stage-${name}"
             echo "→ ${name}"
-            mkdir -p "${stage}/libexec/whaleshell"
+            mkdir -p "${stage}/libexec/cauteum"
             GOOS="$goos" GOARCH="$goarch" go build -trimpath \
-              -ldflags="-s -w -X github.com/whaleshell/whaleshell-cli/internal/service.BuildVersion=${ver}" \
-              -o "${stage}/whaleshell${ext}" ./cmd/whaleshell
-            cp -R "${helpers}/linux-${goarch}" "${stage}/libexec/whaleshell/"
-            if [[ "$goos" != "windows" && -d ../whaleshell-gateway ]]; then
-              GOOS="$goos" GOARCH="$goarch" go build -C ../whaleshell-gateway -trimpath -ldflags="-s -w" \
-                -o "${stage}/whaleshell-gateway" ./cmd/whaleshell-gateway
+              -ldflags="-s -w -X github.com/cauteum/cauteum-cli/internal/service.BuildVersion=${ver}" \
+              -o "${stage}/cauteum${ext}" ./cmd/cauteum
+            cp -R "${helpers}/linux-${goarch}" "${stage}/libexec/cauteum/"
+            if [[ "$goos" != "windows" && -d ../cauteum-gateway ]]; then
+              GOOS="$goos" GOARCH="$goarch" go build -C ../cauteum-gateway -trimpath -ldflags="-s -w" \
+                -o "${stage}/cauteum-gateway" ./cmd/cauteum-gateway
             fi
             cp install.sh "${stage}/"
             if [[ "$goos" == "windows" ]]; then
@@ -152,14 +152,14 @@ jobs:
           build_cli darwin arm64
           build_cli windows amd64 .exe
 
-          if [[ -d ../whaleshell-gateway ]]; then
+          if [[ -d ../cauteum-gateway ]]; then
             for goos in linux darwin; do
               for goarch in amd64 arm64; do
-                name="whaleshell-gateway_$(archive_os "$goos")_$(archive_arch "$goarch")"
+                name="cauteum-gateway_$(archive_os "$goos")_$(archive_arch "$goarch")"
                 echo "→ ${name}"
-                GOOS="$goos" GOARCH="$goarch" go build -C ../whaleshell-gateway -trimpath -ldflags="-s -w" \
-                  -o "${out}/whaleshell-gateway" ./cmd/whaleshell-gateway
-                (cd "$out" && tar -czf "${name}.tar.gz" whaleshell-gateway && rm -f whaleshell-gateway)
+                GOOS="$goos" GOARCH="$goarch" go build -C ../cauteum-gateway -trimpath -ldflags="-s -w" \
+                  -o "${out}/cauteum-gateway" ./cmd/cauteum-gateway
+                (cd "$out" && tar -czf "${name}.tar.gz" cauteum-gateway && rm -f cauteum-gateway)
               done
             done
           fi
@@ -183,7 +183,7 @@ jobs:
 
             ### Install
             ```bash
-            curl -LsSf https://raw.githubusercontent.com/whaleshell/whaleshell-cli/main/install.sh | WHALESHELL_VERSION=nightly sh
+            curl -LsSf https://raw.githubusercontent.com/cauteum/cauteum-cli/main/install.sh | CAUTEUM_VERSION=nightly sh
             ```
           files: dist/*
         env:

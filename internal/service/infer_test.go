@@ -3,8 +3,8 @@ package service_test
 import (
 	"testing"
 
-	"github.com/whaleshell/whaleshell-cli/internal/autoprovider"
-	"github.com/whaleshell/whaleshell-cli/internal/service"
+	"github.com/cauteum/cauteum-cli/internal/autoprovider"
+	"github.com/cauteum/cauteum-cli/internal/service"
 )
 
 func TestInferProvidersFromArgv(t *testing.T) {

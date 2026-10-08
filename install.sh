@@ -1,31 +1,31 @@
 #!/bin/sh
-# SPDX-FileCopyrightText: Copyright (c) 2026 the whaleshell authors
+# SPDX-FileCopyrightText: Copyright (c) 2026 the cauteum authors
 # SPDX-License-Identifier: Apache-2.0
 #
-# Install the whaleshell CLI from a GitHub release (OpenShell-style one-liner).
+# Install the cauteum CLI from a GitHub release (OpenShell-style one-liner).
 #
 # Usage:
-#   curl -LsSf https://raw.githubusercontent.com/whaleshell/whaleshell-cli/main/install.sh | sh
+#   curl -LsSf https://raw.githubusercontent.com/cauteum/cauteum-cli/main/install.sh | sh
 #
 # Environment:
-#   WHALESHELL_VERSION      Release tag (default: latest published release;
+#   CAUTEUM_VERSION      Release tag (default: latest published release;
 #                           "nightly" is available only when manually published)
-#   WHALESHELL_INSTALL_DIR  Install directory (default: ~/.local/bin)
-#   WHALESHELL_REPO         Override owner/name (default: whaleshell/whaleshell-cli)
-#   WHALESHELL_RELEASE_URL  Base URL holding <tag>/<archive> (mirror / air-gapped;
+#   CAUTEUM_INSTALL_DIR  Install directory (default: ~/.local/bin)
+#   CAUTEUM_REPO         Override owner/name (default: cauteum/cauteum-cli)
+#   CAUTEUM_RELEASE_URL  Base URL holding <tag>/<archive> (mirror / air-gapped;
 #                           default: https://github.com/<repo>/releases/download)
 #
 # Layout (Homebrew-style prefix, derived from the install dir):
-#   <prefix>/bin/whaleshell
-#   <prefix>/bin/whaleshell-gateway            (linux / macOS; `whaleshell gateway ensure`)
-#   <prefix>/libexec/whaleshell/linux-<arch>/{whaleshell,whaleshell-init,whaleshell-sshd}
+#   <prefix>/bin/cauteum
+#   <prefix>/bin/cauteum-gateway            (linux / macOS; `cauteum gateway ensure`)
+#   <prefix>/libexec/cauteum/linux-<arch>/{cauteum,cauteum-init,cauteum-sshd}
 # The linux helpers are mounted into sandboxes and proxy sidecars, so no Go
 # toolchain, source checkout, or local image build is needed.
 #
 set -eu
 
-APP_NAME="whaleshell"
-REPO="${WHALESHELL_REPO:-whaleshell/whaleshell-cli}"
+APP_NAME="cauteum"
+REPO="${CAUTEUM_REPO:-cauteum/cauteum-cli}"
 GITHUB_URL="https://github.com/${REPO}"
 API_URL="https://api.github.com/repos/${REPO}"
 
@@ -50,7 +50,7 @@ download() {
   fi
 }
 
-# Map uname to GoReleaser archive names: whaleshell_<Os>_<Arch>.tar.gz
+# Map uname to GoReleaser archive names: cauteum_<Os>_<Arch>.tar.gz
 detect_target() {
   _os="$(uname -s)"
   _arch="$(uname -m)"
@@ -71,8 +71,8 @@ detect_target() {
 }
 
 resolve_version() {
-  if [ -n "${WHALESHELL_VERSION:-}" ]; then
-    printf '%s\n' "$WHALESHELL_VERSION"
+  if [ -n "${CAUTEUM_VERSION:-}" ]; then
+    printf '%s\n' "$CAUTEUM_VERSION"
     return
   fi
   # Latest published release (stable or prerelease marked latest=false — prefer
@@ -97,8 +97,8 @@ resolve_version() {
 }
 
 install_dir() {
-  if [ -n "${WHALESHELL_INSTALL_DIR:-}" ]; then
-    printf '%s\n' "$WHALESHELL_INSTALL_DIR"
+  if [ -n "${CAUTEUM_INSTALL_DIR:-}" ]; then
+    printf '%s\n' "$CAUTEUM_INSTALL_DIR"
     return
   fi
   printf '%s\n' "${HOME}/.local/bin"
@@ -124,7 +124,7 @@ main() {
   if [ "$_target" = "Windows_x86_64" ] || [ "$_target" = "Windows_arm64" ]; then
     _archive="${APP_NAME}_${_target}.zip"
   fi
-  _base="${WHALESHELL_RELEASE_URL:-${GITHUB_URL}/releases/download}"
+  _base="${CAUTEUM_RELEASE_URL:-${GITHUB_URL}/releases/download}"
   _url="${_base}/${_version}/${_archive}"
   _checksums_url="${_base}/${_version}/checksums.txt"
   _dir="$(install_dir)"
@@ -182,8 +182,8 @@ main() {
     info "gateway → ${_dir}/${APP_NAME}-gateway"
   fi
 
-  _helpers_src="${_tmpdir}/libexec/whaleshell"
-  _helpers_dst="$(dirname "$_dir")/libexec/whaleshell"
+  _helpers_src="${_tmpdir}/libexec/cauteum"
+  _helpers_dst="$(dirname "$_dir")/libexec/cauteum"
   if [ -d "$_helpers_src" ]; then
     $_sudo rm -rf "$_helpers_dst"
     $_sudo mkdir -p "$_helpers_dst"

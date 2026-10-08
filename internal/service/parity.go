@@ -11,12 +11,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/whaleshell/whaleshell-cli/internal/outfmt"
-	"github.com/whaleshell/whaleshell-cli/internal/providerflags"
-	"github.com/whaleshell/whaleshell-cli/internal/storage/gwconfig"
-	"github.com/whaleshell/whaleshell-core/defaults"
-	"github.com/whaleshell/whaleshell-runtime/refresh"
-	"github.com/whaleshell/whaleshell-sdk/go/whaleshell"
+	"github.com/cauteum/cauteum-cli/internal/outfmt"
+	"github.com/cauteum/cauteum-cli/internal/providerflags"
+	"github.com/cauteum/cauteum-cli/internal/storage/gwconfig"
+	"github.com/cauteum/cauteum-core/defaults"
+	"github.com/cauteum/cauteum-runtime/refresh"
+	"github.com/cauteum/cauteum-sdk/go/cauteum"
 )
 
 // ProviderGet prints provider metadata (no secret values).
@@ -141,7 +141,7 @@ func (a *App) GatewayRemove(name string) error {
 	return nil
 }
 
-// GatewayInfo prints /v1/info for the selected gateway.
+// GatewayInfo prints the selected gateway's caller-visible control summary.
 func (a *App) GatewayInfo() error {
 	if err := a.GatewayEnsure(); err != nil {
 		return err
@@ -150,7 +150,7 @@ func (a *App) GatewayInfo() error {
 	if err != nil {
 		return err
 	}
-	info, err := whaleshell.NewWithToken(u, a.gatewayTokenForURL(u)).Info(a.apiCtx())
+	info, err := cauteum.NewWithToken(u, a.gatewayTokenForURL(u)).ControlOverview(a.apiCtx())
 	if err != nil {
 		return err
 	}
@@ -227,7 +227,7 @@ func (a *App) Whoami() error {
 		if strings.TrimSpace(g.Token) != "" {
 			snap.Auth = "token"
 		}
-		cli := whaleshell.NewWithToken(g.URL, g.Token)
+		cli := cauteum.NewWithToken(g.URL, g.Token)
 		ctx, cancel := a.withTimeout(TimeoutAPIShort)
 		defer cancel()
 		if who, err := cli.Whoami(ctx); err == nil {
@@ -282,13 +282,13 @@ func (a *App) Whoami() error {
 	}, snap)
 }
 
-// localParityDir is ~/.config/whaleshell/parity for workspace/settings/forward/service/rule MVP state.
+// localParityDir is ~/.config/cauteum/parity for workspace/settings/forward/service/rule MVP state.
 func localParityDir() (string, error) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
 	}
-	dir := filepath.Join(home, ".config", "whaleshell", "parity")
+	dir := filepath.Join(home, ".config", "cauteum", "parity")
 	return dir, os.MkdirAll(dir, 0o755)
 }
 
@@ -596,7 +596,7 @@ func (a *App) ServiceExpose(sandbox, name, port string) error {
 				edgeURL = fmt.Sprintf("http://%s.openshell.localhost:%d/", name, gwPort)
 			}
 		}
-		rec := whaleshell.ServiceRecord{
+		rec := cauteum.ServiceRecord{
 			Name:        name,
 			Sandbox:     sandbox,
 			Port:        guestPort,
@@ -606,7 +606,7 @@ func (a *App) ServiceExpose(sandbox, name, port string) error {
 		if _, err := c.PutService(ctx, rec); err == nil {
 			fmt.Printf("service %s exposed on %s:%d\n", name, sandbox, guestPort)
 			fmt.Printf("  %s\n", edgeURL)
-			fmt.Printf("  http://%s.whaleshell.localhost:%d/\n", name, gwPort)
+			fmt.Printf("  http://%s.cauteum.localhost:%d/\n", name, gwPort)
 			return nil
 		}
 	}

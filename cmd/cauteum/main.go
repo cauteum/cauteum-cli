@@ -8,10 +8,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/whaleshell/slogx"
-	"github.com/whaleshell/whaleshell-cli/internal/app"
-	"github.com/whaleshell/whaleshell-cli/internal/logger"
-	"github.com/whaleshell/whaleshell-cli/internal/service"
+	"github.com/cauteum/cauteum-cli/internal/app"
+	"github.com/cauteum/cauteum-cli/internal/logger"
+	"github.com/cauteum/cauteum-cli/internal/service"
+	"github.com/cauteum/slogx"
 )
 
 func main() {

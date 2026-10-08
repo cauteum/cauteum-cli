@@ -3,7 +3,7 @@ package global_test
 import (
 	"testing"
 
-	"github.com/whaleshell/whaleshell-cli/internal/global"
+	"github.com/cauteum/cauteum-cli/internal/global"
 )
 
 func TestParseGatewayAndOutput(t *testing.T) {

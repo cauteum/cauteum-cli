@@ -4,8 +4,6 @@ import (
 	"context"
 	"errors"
 	"net"
-	"net/http"
-	"net/http/httptest"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -15,9 +13,35 @@ import (
 	"testing"
 	"time"
 
-	"github.com/whaleshell/whaleshell-cli/internal/storage/gwconfig"
-	"github.com/whaleshell/whaleshell-sdk/go/whaleshell"
+	datamodelv1 "github.com/NVIDIA/OpenShell/sdk/go/proto/datamodelv1"
+	openshellv1 "github.com/NVIDIA/OpenShell/sdk/go/proto/openshellv1"
+	"github.com/cauteum/cauteum-cli/internal/storage/gwconfig"
+	"github.com/cauteum/cauteum-sdk/go/cauteum"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
+
+type sshTestServer struct {
+	openshellv1.UnimplementedOpenShellServer
+	calls, unauth *atomic.Int32
+}
+
+func (s *sshTestServer) GetSandbox(context.Context, *openshellv1.GetSandboxRequest) (*openshellv1.SandboxResponse, error) {
+	return &openshellv1.SandboxResponse{Sandbox: &openshellv1.Sandbox{Metadata: &datamodelv1.ObjectMeta{Id: "id-box", Name: "box"}}}, nil
+}
+func (s *sshTestServer) CreateSshSession(ctx context.Context, _ *openshellv1.CreateSshSessionRequest) (*openshellv1.CreateSshSessionResponse, error) {
+	md, _ := metadata.FromIncomingContext(ctx)
+	if len(md.Get("authorization")) == 0 || md.Get("authorization")[0] != "Bearer user-tok" {
+		s.unauth.Add(1)
+		return nil, status.Error(codes.Unauthenticated, "unauthorized")
+	}
+	if s.calls.Add(1) < 3 {
+		return nil, status.Error(codes.FailedPrecondition, "sandbox is not ready (supervisor relay not connected)")
+	}
+	return &openshellv1.CreateSshSessionResponse{SandboxId: "id-box", Token: "sess-tok", GatewayHost: "127.0.0.1", GatewayPort: 2222, GatewayScheme: "http"}, nil
+}
 
 // isolate points config/state lookups at a temp dir and clears gateway env.
 func isolate(t *testing.T) string {
@@ -26,7 +50,7 @@ func isolate(t *testing.T) string {
 	t.Setenv("XDG_CONFIG_HOME", filepath.Join(dir, "config"))
 	t.Setenv("XDG_STATE_HOME", filepath.Join(dir, "state"))
 	t.Setenv("HOME", dir)
-	for _, k := range []string{whaleshell.EnvToken, "OPENSHELL_GATEWAY", "WHALESHELL_GATEWAY_URL"} {
+	for _, k := range []string{cauteum.EnvToken, "OPENSHELL_GATEWAY", "CAUTEUM_GATEWAY_URL"} {
 		t.Setenv(k, "")
 	}
 	return dir
@@ -40,9 +64,9 @@ func saveGateways(t *testing.T, current string, gws map[string]gwconfig.Gateway)
 }
 
 func TestSSHCommandArgs(t *testing.T) {
-	pc := "/usr/bin/whaleshell ssh-proxy --gateway-name dev --name box"
+	pc := "/usr/bin/cauteum ssh-proxy --gateway-name dev --name box"
 
-	got := SSHCommandArgs(pc, "whaleshell-box", true, nil)
+	got := SSHCommandArgs(pc, "cauteum-box", true, nil)
 	joined := strings.Join(got, " ")
 	for _, want := range []string{
 		"-o StrictHostKeyChecking=no",
@@ -55,7 +79,7 @@ func TestSSHCommandArgs(t *testing.T) {
 			t.Fatalf("missing %q in %q", want, joined)
 		}
 	}
-	if got[len(got)-1] != "whaleshell-box" {
+	if got[len(got)-1] != "cauteum-box" {
 		t.Fatalf("interactive: alias must be last, got %q", got)
 	}
 	for _, a := range got {
@@ -64,11 +88,11 @@ func TestSSHCommandArgs(t *testing.T) {
 		}
 	}
 
-	got = SSHCommandArgs(pc, "whaleshell-box", true, []string{"ls", "-la"})
-	if n := len(got); got[n-3] != "-t" || got[n-2] != "whaleshell-box" || got[n-1] != "ls -la" {
+	got = SSHCommandArgs(pc, "cauteum-box", true, []string{"ls", "-la"})
+	if n := len(got); got[n-3] != "-t" || got[n-2] != "cauteum-box" || got[n-1] != "ls -la" {
 		t.Fatalf("tty command argv: %q", got)
 	}
-	got = SSHCommandArgs(pc, "whaleshell-box", false, []string{"echo", "a b"})
+	got = SSHCommandArgs(pc, "cauteum-box", false, []string{"echo", "a b"})
 	if n := len(got); got[n-3] != "-T" || got[n-1] != "echo 'a b'" {
 		t.Fatalf("non-tty command argv: %q", got)
 	}
@@ -92,12 +116,12 @@ func TestPosixQuoteRoundTrip(t *testing.T) {
 
 func TestEditorCommand(t *testing.T) {
 	cases := map[string][]string{
-		"cursor": {"cursor", "--remote", "ssh-remote+whaleshell-box", "/workspace"},
-		"vscode": {"code", "--remote", "ssh-remote+whaleshell-box", "/workspace"},
-		"code":   {"code", "--remote", "ssh-remote+whaleshell-box", "/workspace"},
+		"cursor": {"cursor", "--remote", "ssh-remote+cauteum-box", "/workspace"},
+		"vscode": {"code", "--remote", "ssh-remote+cauteum-box", "/workspace"},
+		"code":   {"code", "--remote", "ssh-remote+cauteum-box", "/workspace"},
 	}
 	for ed, want := range cases {
-		got, err := EditorCommand(ed, "whaleshell-box")
+		got, err := EditorCommand(ed, "cauteum-box")
 		if err != nil || !reflect.DeepEqual(got, want) {
 			t.Fatalf("EditorCommand(%q) = %q, %v; want %q", ed, got, err, want)
 		}
@@ -164,7 +188,7 @@ func TestProxyGatewayArgsAndHostBlock(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.HasPrefix(block, "Host whaleshell-box\n") {
+	if !strings.HasPrefix(block, "Host cauteum-box\n") {
 		t.Fatalf("host block: %q", block)
 	}
 	if !strings.Contains(block, "ssh-proxy --gateway-name dev --name box") {
@@ -236,7 +260,7 @@ func TestGatewayTokenForURL(t *testing.T) {
 		t.Fatalf("local gateway auth_token: %q", got)
 	}
 
-	t.Setenv(whaleshell.EnvToken, "env-token")
+	t.Setenv(cauteum.EnvToken, "env-token")
 	if got := a.gatewayTokenForURL("https://a.example"); got != "env-token" {
 		t.Fatalf("env must win: %q", got)
 	}
@@ -244,42 +268,32 @@ func TestGatewayTokenForURL(t *testing.T) {
 
 func TestCreateSSHSessionWait(t *testing.T) {
 	var calls, unauth atomic.Int32
-	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("Authorization") != "Bearer user-tok" {
-			unauth.Add(1)
-			http.Error(w, "unauthorized", http.StatusUnauthorized)
-			return
-		}
-		if r.Method != http.MethodPost || r.URL.Path != "/v1/sandboxes/box/ssh-session" {
-			http.NotFound(w, r)
-			return
-		}
-		if calls.Add(1) < 3 {
-			http.Error(w, "sandbox is not ready", http.StatusPreconditionFailed)
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write([]byte(`{"session_id":"s1","sandbox_id":"box","token":"sess-tok"}`))
-	}))
-	defer srv.Close()
-
-	c := whaleshell.NewWithToken(srv.URL, "user-tok")
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	srv := grpc.NewServer()
+	openshellv1.RegisterOpenShellServer(srv, &sshTestServer{calls: &calls, unauth: &unauth})
+	go func() { _ = srv.Serve(listener) }()
+	defer srv.Stop()
+	base := "http://" + listener.Addr().String()
+	c := cauteum.NewWithToken(base, "user-tok")
 	sess, err := createSSHSessionWait(context.Background(), c, "box", 10*time.Second)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if sess.Token != "sess-tok" || sess.SessionID != "s1" || calls.Load() != 3 || unauth.Load() != 0 {
+	if sess.Token != "sess-tok" || sess.SandboxID != "id-box" || calls.Load() != 3 || unauth.Load() != 0 {
 		t.Fatalf("sess=%+v calls=%d unauth=%d", sess, calls.Load(), unauth.Load())
 	}
 
-	calls.Store(-100)
+	calls.Store(0)
 	_, err = createSSHSessionWait(context.Background(), c, "box", 0)
-	if !errors.Is(err, whaleshell.ErrSandboxNotReady) {
+	if !errors.Is(err, cauteum.ErrSandboxNotReady) {
 		t.Fatalf("timeout must surface ErrSandboxNotReady, got %v", err)
 	}
 
-	bad := whaleshell.NewWithToken(srv.URL, "wrong")
-	if _, err := createSSHSessionWait(context.Background(), bad, "box", 10*time.Second); err == nil || errors.Is(err, whaleshell.ErrSandboxNotReady) {
+	bad := cauteum.NewWithToken(base, "wrong")
+	if _, err := createSSHSessionWait(context.Background(), bad, "box", 10*time.Second); err == nil || errors.Is(err, cauteum.ErrSandboxNotReady) {
 		t.Fatalf("401 must fail fast, got %v", err)
 	}
 }

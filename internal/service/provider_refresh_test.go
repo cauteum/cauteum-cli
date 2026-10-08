@@ -3,7 +3,7 @@ package service
 import (
 	"testing"
 
-	"github.com/whaleshell/whaleshell-providers/provider"
+	"github.com/cauteum/cauteum-providers/provider"
 )
 
 func TestProfileRefreshConfigMapsSecretsAndOutputs(t *testing.T) {

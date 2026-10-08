@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/whaleshell/slogx"
-	"github.com/whaleshell/whaleshell-cli/internal/logger"
+	"github.com/cauteum/cauteum-cli/internal/logger"
+	"github.com/cauteum/slogx"
 )
 
 func TestOpLogger_includesOpAttr(t *testing.T) {

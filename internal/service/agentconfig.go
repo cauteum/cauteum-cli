@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2026 whaleshell
+// SPDX-FileCopyrightText: Copyright (c) 2026 cauteum
 // SPDX-License-Identifier: Apache-2.0
 
 package service
@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"os"
 
-	core "github.com/whaleshell/whaleshell-core"
-	"github.com/whaleshell/whaleshell-driver/driver"
-	"github.com/whaleshell/whaleshell-runtime/agentconfig"
+	core "github.com/cauteum/cauteum-core"
+	"github.com/cauteum/cauteum-driver/driver"
+	"github.com/cauteum/cauteum-runtime/agentconfig"
 )
 
 type guestDriver interface {

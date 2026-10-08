@@ -10,8 +10,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/whaleshell/slogx"
-	"github.com/whaleshell/whaleshell-core/defaults"
+	"github.com/cauteum/cauteum-core/defaults"
+	"github.com/cauteum/slogx"
 )
 
 const localGatewayName = "local"
@@ -19,7 +19,7 @@ const localGatewayURL = "http://" + defaults.GatewayListen
 
 // GatewayEnsure makes sure a reachable gateway is selected (OpenShell install UX).
 // If the current gateway is healthy, it is a no-op. Otherwise it starts a local
-// whaleshell-gateway on 127.0.0.1:7443 (sibling binary or PATH), registers it as "local",
+// cauteum-gateway on 127.0.0.1:7443 (sibling binary or PATH), registers it as "local",
 // and selects it.
 func (a *App) GatewayEnsure() error {
 	const op = "cli.gateway.ensure"
@@ -47,7 +47,7 @@ func (a *App) GatewayEnsure() error {
 	bin, err := findGatewayBinary()
 	if err != nil {
 		log.Error("gateway binary not found", slogx.Err(err))
-		return fmt.Errorf("gateway ensure: %w\nStart manually: whaleshell-gateway --listen %s\nThen: whaleshell gateway add local --url %s && whaleshell gateway select local",
+		return fmt.Errorf("gateway ensure: %w\nStart manually: cauteum-gateway --listen %s\nThen: cauteum gateway add local --url %s && cauteum gateway select local",
 			err, defaults.GatewayListen, localGatewayURL)
 	}
 	logPath, err := gatewayLogPath()
@@ -108,21 +108,21 @@ func findGatewayBinary() (string, error) {
 	if exe, err := os.Executable(); err == nil {
 		dir := filepath.Dir(exe)
 		candidates = append(candidates,
-			filepath.Join(dir, "whaleshell-gateway"),
-			filepath.Join(dir, "whaleshell-gateway-darwin-arm64"),
-			filepath.Join(dir, "whaleshell-gateway-darwin-amd64"),
-			filepath.Join(dir, "whaleshell-gateway-linux-arm64"),
-			filepath.Join(dir, "whaleshell-gateway-linux-amd64"),
+			filepath.Join(dir, "cauteum-gateway"),
+			filepath.Join(dir, "cauteum-gateway-darwin-arm64"),
+			filepath.Join(dir, "cauteum-gateway-darwin-amd64"),
+			filepath.Join(dir, "cauteum-gateway-linux-arm64"),
+			filepath.Join(dir, "cauteum-gateway-linux-amd64"),
 		)
 	}
 	if wd, err := os.Getwd(); err == nil {
 		candidates = append(candidates,
-			filepath.Join(wd, "whaleshell-gateway"),
-			filepath.Join(wd, "whaleshell-cli", "whaleshell-gateway"),
-			filepath.Join(wd, "whaleshell-gateway", "whaleshell-gateway"),
+			filepath.Join(wd, "cauteum-gateway"),
+			filepath.Join(wd, "cauteum-cli", "cauteum-gateway"),
+			filepath.Join(wd, "cauteum-gateway", "cauteum-gateway"),
 		)
 	}
-	if p, err := exec.LookPath("whaleshell-gateway"); err == nil {
+	if p, err := exec.LookPath("cauteum-gateway"); err == nil {
 		candidates = append(candidates, p)
 	}
 	for _, c := range candidates {
@@ -130,7 +130,7 @@ func findGatewayBinary() (string, error) {
 			return c, nil
 		}
 	}
-	return "", fmt.Errorf("whaleshell-gateway binary not found next to whaleshell or on PATH")
+	return "", fmt.Errorf("cauteum-gateway binary not found next to cauteum or on PATH")
 }
 
 func gatewayLogPath() (string, error) {
@@ -138,7 +138,7 @@ func gatewayLogPath() (string, error) {
 	if err != nil {
 		dir = os.TempDir()
 	}
-	dir = filepath.Join(dir, "whaleshell")
+	dir = filepath.Join(dir, "cauteum")
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return "", err
 	}

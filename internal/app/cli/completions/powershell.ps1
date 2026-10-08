@@ -1,4 +1,4 @@
-Register-ArgumentCompleter -CommandName whaleshell -ScriptBlock {
+Register-ArgumentCompleter -CommandName cauteum -ScriptBlock {
     param($wordToComplete)
 
     @(

@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/whaleshell/whaleshell-cli/internal/outfmt"
-	"github.com/whaleshell/whaleshell-sdk/go/whaleshell"
+	"github.com/cauteum/cauteum-cli/internal/outfmt"
+	"github.com/cauteum/cauteum-sdk/go/cauteum"
 )
 
 // StatusSnapshot is structured status for -o json|yaml.
@@ -33,7 +33,7 @@ func (a *App) Status() error {
 	out.Gateway = u
 	ctx, cancel := a.withTimeout(TimeoutAPIShort)
 	defer cancel()
-	cli := whaleshell.NewWithToken(u, a.gatewayTokenForURL(u))
+	cli := cauteum.NewWithToken(u, a.gatewayTokenForURL(u))
 	if _, err := cli.Healthz(ctx); err == nil {
 		out.Status = "Connected"
 	}

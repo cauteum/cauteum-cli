@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/whaleshell/whaleshell-cli/internal/storage/gwconfig"
-	display "github.com/whaleshell/whaleshell-display"
-	"github.com/whaleshell/whaleshell-runtime/idp"
+	"github.com/cauteum/cauteum-cli/internal/storage/gwconfig"
+	display "github.com/cauteum/cauteum-display"
+	"github.com/cauteum/cauteum-runtime/idp"
 )
 
 // GatewayLoginInteractive stores a bearer token.
@@ -22,7 +22,7 @@ import (
 func (a *App) GatewayLoginInteractive(token string) error {
 	token = strings.TrimSpace(token)
 	if token == "" {
-		token = strings.TrimSpace(os.Getenv("WHALESHELL_GATEWAY_TOKEN"))
+		token = strings.TrimSpace(os.Getenv("CAUTEUM_GATEWAY_TOKEN"))
 	}
 	if token != "" {
 		return a.GatewayLogin(token)
@@ -55,7 +55,7 @@ func (a *App) GatewayLoginInteractive(token string) error {
 	}
 	if issuer != "" {
 		if clientID == "" {
-			return fmt.Errorf("gateway login: OIDC issuer set but client_id missing (gateway add --oidc-client-id or WHALESHELL_OIDC_CLIENT_ID on gateway)")
+			return fmt.Errorf("gateway login: OIDC issuer set but client_id missing (gateway add --oidc-client-id or CAUTEUM_OIDC_CLIENT_ID on gateway)")
 		}
 		ctx, cancel := a.withTimeout(TimeoutWaitLong)
 		defer cancel()
@@ -165,7 +165,7 @@ func (a *App) gatewayLoginBrowserLocal(gatewayURL string) (string, error) {
 				ch <- result{err: fmt.Errorf("callback missing token")}
 				return
 			}
-			fmt.Fprint(w, "whaleshell gateway login ok — you can close this tab")
+			fmt.Fprint(w, "cauteum gateway login ok — you can close this tab")
 			ch <- result{token: tok}
 		}),
 		ReadHeaderTimeout: loginHeaderReadTimeout,

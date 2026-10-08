@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2026 whaleshell
+// SPDX-FileCopyrightText: Copyright (c) 2026 cauteum
 // SPDX-License-Identifier: Apache-2.0
 
 package service
@@ -13,14 +13,14 @@ import (
 	"sort"
 	"time"
 
-	"github.com/whaleshell/whaleshell-sdk/go/whaleshell"
+	"github.com/cauteum/cauteum-sdk/go/cauteum"
 )
 
 // RuleListFilter lists policy.local proposals (gateway) with local fallback.
 func (a *App) RuleListFilter(sandbox, status string) error {
 	if sandbox != "" {
 		if gw, err := a.currentGatewayURL(); err == nil && gw != "" {
-			c := whaleshell.NewWithToken(gw, a.gatewayTokenForURL(gw))
+			c := cauteum.NewWithToken(gw, a.gatewayTokenForURL(gw))
 			ctx, cancel := a.withTimeout(TimeoutAPI)
 			defer cancel()
 			list, err := c.ListProposals(ctx, sandbox, status)
@@ -32,10 +32,10 @@ func (a *App) RuleListFilter(sandbox, status string) error {
 			fmt.Fprintf(os.Stderr, "rule: gateway list: %v (falling back to local)\n", err)
 		}
 	} else if gw, err := a.currentGatewayURL(); err == nil && gw != "" {
-		c := whaleshell.NewWithToken(gw, a.gatewayTokenForURL(gw))
+		c := cauteum.NewWithToken(gw, a.gatewayTokenForURL(gw))
 		ctx, cancel := a.withTimeout(TimeoutAPI)
 		defer cancel()
-		var all []whaleshell.Proposal
+		var all []cauteum.Proposal
 		for _, sb := range a.ruleCandidateSandboxes(ctx, c) {
 			list, err := c.ListProposals(ctx, sb, status)
 			if err != nil {
@@ -103,7 +103,7 @@ func (a *App) RuleApproveAll(sandbox string, includeSecurityFlagged bool) error 
 		}
 		return a.ruleApproveAllLocal(sandbox, includeSecurityFlagged)
 	}
-	c := whaleshell.NewWithToken(gw, a.gatewayTokenForURL(gw))
+	c := cauteum.NewWithToken(gw, a.gatewayTokenForURL(gw))
 	ctx, cancel := a.withTimeout(TimeoutAPILong)
 	defer cancel()
 	sandboxes := []string{sandbox}
@@ -197,7 +197,7 @@ func (a *App) ruleDecide(id string, approve bool, reason string) error {
 		}
 		return a.ruleSet(id, state, reason)
 	}
-	c := whaleshell.NewWithToken(gw, a.gatewayTokenForURL(gw))
+	c := cauteum.NewWithToken(gw, a.gatewayTokenForURL(gw))
 	ctx, cancel := a.withTimeout(TimeoutAPILong)
 	defer cancel()
 
@@ -245,7 +245,7 @@ func (a *App) ruleDecide(id string, approve bool, reason string) error {
 	return nil
 }
 
-func (a *App) refreshApprovedPolicy(ctx context.Context, c *whaleshell.Client, sandbox string) error {
+func (a *App) refreshApprovedPolicy(ctx context.Context, c *cauteum.Client, sandbox string) error {
 	eff, err := c.GetSandboxPolicy(ctx, sandbox, "full")
 	if err != nil {
 		return fmt.Errorf("rule approve: get effective: %w", err)
@@ -260,7 +260,7 @@ func (a *App) refreshApprovedPolicy(ctx context.Context, c *whaleshell.Client, s
 	return writeFileInPlace(hostPath, eff)
 }
 
-func (a *App) ruleCandidateSandboxes(ctx context.Context, c *whaleshell.Client) []string {
+func (a *App) ruleCandidateSandboxes(ctx context.Context, c *cauteum.Client) []string {
 	var out []string
 	if list, err := c.ListSandboxes(ctx); err == nil {
 		for _, sb := range list {

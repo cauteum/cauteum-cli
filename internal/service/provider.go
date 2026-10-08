@@ -8,16 +8,17 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
-	"github.com/whaleshell/whaleshell-cli/internal/providerflags"
-	"github.com/whaleshell/whaleshell-cli/internal/storage/gwconfig"
-	"github.com/whaleshell/whaleshell-core/engine"
-	"github.com/whaleshell/whaleshell-core/env"
-	"github.com/whaleshell/whaleshell-core/policy"
-	"github.com/whaleshell/whaleshell-providers/provider"
-	"github.com/whaleshell/whaleshell-sdk/go/whaleshell"
+	"github.com/cauteum/cauteum-cli/internal/providerflags"
+	"github.com/cauteum/cauteum-cli/internal/storage/gwconfig"
+	"github.com/cauteum/cauteum-core/engine"
+	"github.com/cauteum/cauteum-core/env"
+	"github.com/cauteum/cauteum-core/policy"
+	"github.com/cauteum/cauteum-providers/provider"
+	"github.com/cauteum/cauteum-sdk/go/cauteum"
 	"gopkg.in/yaml.v3"
 )
 
@@ -52,7 +53,7 @@ func (a *App) ProviderProfileImport(path string, scopeOptions ...string) error {
 	scope, workspace := a.profileScope(scopeOptions...)
 	for _, item := range profiles {
 		if err := c.CreateProfileScoped(a.apiCtx(), item.profile.ID, item.data, scope, workspace); err != nil {
-			return err
+			return fmt.Errorf("profile import %s: %w", item.profile.ID, err)
 		}
 		fmt.Printf("imported profile %s\n", item.profile.ID)
 	}
@@ -154,17 +155,18 @@ func (a *App) ProviderProfileUpdate(path string, scopeOptions ...string) error {
 	}
 	scope, workspace := a.profileScope(scopeOptions...)
 	for _, item := range items {
-		_, source, _, err := c.GetProfileScoped(a.apiCtx(), item.profile.ID, scope, workspace)
+		_, source, currentVersion, err := c.GetProfileScoped(a.apiCtx(), item.profile.ID, scope, workspace)
 		if err != nil {
 			return fmt.Errorf("profile update %s: read current version: %w", item.profile.ID, err)
 		}
 		if source != "custom" {
 			return fmt.Errorf("profile update %s: profile is not imported on gateway", item.profile.ID)
 		}
-		if item.profile.ResourceVersion == 0 {
+		version, parseErr := strconv.ParseUint(currentVersion, 10, 64)
+		if parseErr != nil || item.profile.ResourceVersion == 0 || item.profile.ResourceVersion != version {
 			return fmt.Errorf("profile update %s: resource_version required; export the current profile and preserve its version", item.profile.ID)
 		}
-		if err := c.PutProfileScoped(a.apiCtx(), item.profile.ID, item.data, fmt.Sprint(item.profile.ResourceVersion), scope, workspace); err != nil {
+		if err := c.PutProfileScoped(a.apiCtx(), item.profile.ID, item.data, currentVersion, scope, workspace); err != nil {
 			return err
 		}
 		fmt.Printf("updated profile %s\n", item.profile.ID)
@@ -284,9 +286,9 @@ func (a *App) ProviderCreate(args providerflags.CreateArgs) error {
 			tok = strings.TrimSpace(cfg.Gateways[cfg.Current].Token)
 		}
 		if tok == "" {
-			return fmt.Errorf("provider create --from-oidc-token: no gateway token (run: whaleshell gateway login)")
+			return fmt.Errorf("provider create --from-oidc-token: no gateway token (run: cauteum gateway login)")
 		}
-		key := "WHALESHELL_GATEWAY_TOKEN"
+		key := "CAUTEUM_GATEWAY_TOKEN"
 		if len(envVars) > 0 {
 			key = envVars[0]
 		}
@@ -316,7 +318,7 @@ func (a *App) ProviderCreate(args providerflags.CreateArgs) error {
 		return err
 	}
 	_, workspace := a.profileScope()
-	rec := whaleshell.ProviderRecord{
+	rec := cauteum.ProviderRecord{
 		Name:                  args.Name,
 		Type:                  args.Profile,
 		Workspace:             workspace,
@@ -336,7 +338,7 @@ func (a *App) ProviderCreate(args providerflags.CreateArgs) error {
 
 // profileRefreshConfig carries supported OpenShell refresh metadata into the
 // gateway provider record. Secret values are resolved later from encrypted storage.
-func profileRefreshConfig(prof provider.Profile, selectedEnvKeys []string) map[string]whaleshell.ProviderRefreshConfig {
+func profileRefreshConfig(prof provider.Profile, selectedEnvKeys []string) map[string]cauteum.ProviderRefreshConfig {
 	selected := make(map[string]struct{}, len(selectedEnvKeys))
 	for _, key := range selectedEnvKeys {
 		selected[strings.TrimSpace(key)] = struct{}{}
@@ -358,7 +360,7 @@ func profileRefreshConfig(prof provider.Profile, selectedEnvKeys []string) map[s
 		}
 		return ""
 	}
-	out := map[string]whaleshell.ProviderRefreshConfig{}
+	out := map[string]cauteum.ProviderRefreshConfig{}
 	for _, credential := range prof.Credentials {
 		if credential.Refresh == nil {
 			continue
@@ -384,7 +386,7 @@ func profileRefreshConfig(prof provider.Profile, selectedEnvKeys []string) map[s
 		if primaryKey == "" {
 			continue
 		}
-		cfg := whaleshell.ProviderRefreshConfig{
+		cfg := cauteum.ProviderRefreshConfig{
 			CredentialKey:        primaryKey,
 			Strategy:             strategy,
 			Material:             map[string]string{},
@@ -436,7 +438,7 @@ func (a *App) ProviderUpdate(name string, fromExisting bool, credentials map[str
 	if err != nil {
 		return err
 	}
-	var rec whaleshell.ProviderRecord
+	var rec cauteum.ProviderRecord
 	found := false
 	for _, p := range list {
 		if p.Name == name {
@@ -507,7 +509,7 @@ func (a *App) prepareProviders(base policy.Document, basePath string, names []st
 	if err != nil {
 		dir = os.TempDir()
 	}
-	outDir := filepath.Join(dir, "whaleshell", "composed-policy")
+	outDir := filepath.Join(dir, "cauteum", "composed-policy")
 	if err := os.MkdirAll(outDir, 0o700); err != nil {
 		return nil, base, basePath, err
 	}
@@ -524,7 +526,7 @@ func (a *App) resolveProviderForCreate(name, gwURL string) (provider.Profile, []
 		c := a.clientFor(gwURL)
 		list, err := c.ListProviders(a.apiCtx())
 		if err != nil {
-			return provider.Profile{}, nil, "", fmt.Errorf("provider %q: gateway %s: %w (is whaleshell-gateway running?)", name, gwURL, err)
+			return provider.Profile{}, nil, "", fmt.Errorf("provider %q: gateway %s: %w (is cauteum-gateway running?)", name, gwURL, err)
 		}
 		for _, rec := range list {
 			if rec.Name != name {
@@ -553,7 +555,7 @@ func (a *App) resolveProviderForCreate(name, gwURL string) (provider.Profile, []
 	if err != nil {
 		hint := ""
 		if gwURL != "" {
-			hint = fmt.Sprintf(" (no gateway instance %q; create with: whaleshell provider create --name %s --type <profile> — or use --provider <profile-id>)", name, name)
+			hint = fmt.Sprintf(" (no gateway instance %q; create with: cauteum provider create --name %s --type <profile> — or use --provider <profile-id>)", name, name)
 		}
 		return provider.Profile{}, nil, "", fmt.Errorf("provider %q: not a gateway instance or builtin profile%s: %w", name, hint, err)
 	}
@@ -570,7 +572,7 @@ func (a *App) resolveProviderForCreate(name, gwURL string) (provider.Profile, []
 				creds[k] = v
 			}
 		}
-		if err := c.PutProvider(a.apiCtx(), whaleshell.ProviderRecord{
+		if err := c.PutProvider(a.apiCtx(), cauteum.ProviderRecord{
 			Name: name, Type: prof.ID, Workspace: workspace, EnvVars: keys, Credentials: creds,
 			Config: prof.DiscoverConfig(),
 		}); err != nil {
@@ -586,7 +588,7 @@ func loadBuiltinProfile(idOrPath string) (provider.Profile, error) {
 	}
 	dir := provider.FindBuiltinDir()
 	if dir == "" {
-		return provider.Profile{}, fmt.Errorf("providers dir not found (need whaleshell-cli/providers)")
+		return provider.Profile{}, fmt.Errorf("providers dir not found (need cauteum-cli/providers)")
 	}
 	path := filepath.Join(dir, idOrPath+".yaml")
 	return provider.LoadFile(path)
@@ -655,7 +657,7 @@ func (a *App) ProviderAttach(sandbox, providerName string) error {
 	}
 	fmt.Printf("attached %s → sandbox %s\n", providerName, sandbox)
 	if err := a.applyEffectivePolicy(sandbox); err != nil {
-		fmt.Printf("warn: could not apply effective policy (%v); run: whaleshell provider effective %s > /tmp/p.yaml && whaleshell policy set %s /tmp/p.yaml\n",
+		fmt.Printf("warn: could not apply effective policy (%v); run: cauteum provider effective %s > /tmp/p.yaml && cauteum policy set %s /tmp/p.yaml\n",
 			err, sandbox, sandbox)
 		return nil
 	}

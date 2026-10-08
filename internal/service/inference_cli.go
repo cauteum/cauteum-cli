@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/whaleshell/whaleshell-cli/internal/osargs"
-	"github.com/whaleshell/whaleshell-sdk/go/whaleshell"
+	"github.com/cauteum/cauteum-cli/internal/osargs"
+	"github.com/cauteum/cauteum-sdk/go/cauteum"
 )
 
 // InferenceRouteGet prints the gateway inference route.
@@ -38,7 +38,7 @@ func (a *App) InferenceRouteSet(opt osargs.InferenceSet) error {
 	}
 	ctx, cancel := a.withTimeout(TimeoutAPILong)
 	defer cancel()
-	route := whaleshell.InferenceRoute{
+	route := cauteum.InferenceRoute{
 		Provider:   opt.Provider,
 		Model:      opt.Model,
 		TimeoutSec: opt.TimeoutSec,

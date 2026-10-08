@@ -8,13 +8,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/whaleshell/whaleshell-cli/internal/global"
-	"github.com/whaleshell/whaleshell-cli/internal/storage/gwconfig"
-	"github.com/whaleshell/whaleshell-core/defaults"
-	"github.com/whaleshell/whaleshell-sdk/go/whaleshell"
+	"github.com/cauteum/cauteum-cli/internal/global"
+	"github.com/cauteum/cauteum-cli/internal/storage/gwconfig"
+	"github.com/cauteum/cauteum-core/defaults"
+	"github.com/cauteum/cauteum-sdk/go/cauteum"
 )
 
-var errNoCurrentGateway = errors.New("no current gateway; run: whaleshell gateway add|select")
+var errNoCurrentGateway = errors.New("no current gateway; run: cauteum gateway add|select")
 
 // ApplyGlobal stores OpenShell-style global flags for this CLI session.
 func (a *App) ApplyGlobal(g global.Context) {
@@ -34,12 +34,12 @@ func looksLikeGatewayURL(s string) bool {
 }
 
 // currentGatewayURL resolves the active gateway endpoint.
-// Order: App URL override, OPENSHELL_GATEWAY/WHALESHELL_GATEWAY_URL, -g name, config current.
+// Order: App URL override, OPENSHELL_GATEWAY/CAUTEUM_GATEWAY_URL, -g name, config current.
 func (a *App) currentGatewayURL() (string, error) {
 	if a != nil && a.GatewayURLOverride != "" {
 		return strings.TrimRight(a.GatewayURLOverride, "/"), nil
 	}
-	if v := firstNonEmptyEnv("OPENSHELL_GATEWAY", "WHALESHELL_GATEWAY_URL"); v != "" {
+	if v := firstNonEmptyEnv("OPENSHELL_GATEWAY", "CAUTEUM_GATEWAY_URL"); v != "" {
 		if looksLikeGatewayURL(v) {
 			return strings.TrimRight(v, "/"), nil
 		}
@@ -50,7 +50,7 @@ func (a *App) currentGatewayURL() (string, error) {
 		if g, ok := cfg.Gateways[v]; ok && g.URL != "" {
 			return strings.TrimRight(g.URL, "/"), nil
 		}
-		return "", fmt.Errorf("gateway %q from env not in config (whaleshell gateway add)", v)
+		return "", fmt.Errorf("gateway %q from env not in config (cauteum gateway add)", v)
 	}
 	if a != nil && a.GatewayNameOverride != "" {
 		cfg, _, err := gwconfig.Load()
@@ -75,10 +75,10 @@ func (a *App) currentGatewayURL() (string, error) {
 }
 
 // gatewayTokenForURL resolves the bearer for a gateway URL:
-// $WHALESHELL_GATEWAY_TOKEN, then the config token, then the gateway's
+// $CAUTEUM_GATEWAY_TOKEN, then the config token, then the gateway's
 // owner-only <data_dir>/auth_token (local gateways started by this CLI).
 func (a *App) gatewayTokenForURL(url string) string {
-	if v := strings.TrimSpace(os.Getenv(whaleshell.EnvToken)); v != "" {
+	if v := strings.TrimSpace(os.Getenv(cauteum.EnvToken)); v != "" {
 		return v
 	}
 	url = strings.TrimRight(url, "/")
@@ -117,21 +117,23 @@ func isLocalGatewayURL(u string) bool {
 	return u == localGatewayURL || u == "http://localhost:"+strconv.Itoa(defaults.GatewayPort)
 }
 
-// defaultGatewayDataDir mirrors whaleshell-gateway's default --data-dir.
+// defaultGatewayDataDir mirrors cauteum-gateway's default --data-dir.
 func defaultGatewayDataDir() string {
 	if xdg := os.Getenv("XDG_STATE_HOME"); xdg != "" {
-		return filepath.Join(xdg, "whaleshell", "gateway")
+		return filepath.Join(xdg, "cauteum", "gateway")
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
-		return filepath.Join(os.TempDir(), "whaleshell-gateway")
+		return filepath.Join(os.TempDir(), "cauteum-gateway")
 	}
-	return filepath.Join(home, ".local", "state", "whaleshell", "gateway")
+	return filepath.Join(home, ".local", "state", "cauteum", "gateway")
 }
 
 // clientFor returns an authenticated client for a gateway URL.
-func (a *App) clientFor(u string) *whaleshell.Client {
-	return whaleshell.NewWithToken(u, a.gatewayTokenForURL(u))
+func (a *App) clientFor(u string) *cauteum.Client {
+	client := cauteum.NewWithToken(u, a.gatewayTokenForURL(u))
+	client.Workspace = a.GlobalWorkspace
+	return client
 }
 
 func firstNonEmptyEnv(keys ...string) string {
@@ -143,7 +145,7 @@ func firstNonEmptyEnv(keys ...string) string {
 	return ""
 }
 
-func (a *App) gatewayClient() (*whaleshell.Client, error) {
+func (a *App) gatewayClient() (*cauteum.Client, error) {
 	if err := a.GatewayEnsure(); err != nil {
 		return nil, err
 	}
@@ -152,7 +154,7 @@ func (a *App) gatewayClient() (*whaleshell.Client, error) {
 		return nil, err
 	}
 	if u == "" {
-		return nil, fmt.Errorf("no gateway selected (whaleshell gateway ensure|add|select)")
+		return nil, fmt.Errorf("no gateway selected (cauteum gateway ensure|add|select)")
 	}
 	return a.clientFor(u), nil
 }

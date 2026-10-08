@@ -14,11 +14,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/whaleshell/whaleshell-cli/internal/sshconfig"
-	"github.com/whaleshell/whaleshell-cli/internal/storage/gwconfig"
-	"github.com/whaleshell/whaleshell-core/defaults"
-	"github.com/whaleshell/whaleshell-core/relayproto"
-	"github.com/whaleshell/whaleshell-sdk/go/whaleshell"
+	"github.com/cauteum/cauteum-cli/internal/sshconfig"
+	"github.com/cauteum/cauteum-cli/internal/storage/gwconfig"
+	"github.com/cauteum/cauteum-core/defaults"
+	"github.com/cauteum/cauteum-core/relayproto"
+	"github.com/cauteum/cauteum-sdk/go/cauteum"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/term"
 )
@@ -58,7 +58,7 @@ func (a *App) resolveGatewayURL(url, name string) (string, error) {
 		}
 		g, ok := cfg.Gateways[name]
 		if !ok || g.URL == "" {
-			return "", fmt.Errorf("gateway %q not in config (whaleshell gateway add)", name)
+			return "", fmt.Errorf("gateway %q not in config (cauteum gateway add)", name)
 		}
 		return strings.TrimRight(g.URL, "/"), nil
 	}
@@ -140,7 +140,7 @@ func (a *App) SandboxSSHConfig(name string, install bool) error {
 func (a *App) SandboxConnect(opt ConnectOpts) error {
 	name := strings.TrimSpace(opt.Name)
 	if name == "" {
-		return fmt.Errorf("usage: whaleshell sandbox connect <name> [--editor vscode|cursor] [-- cmd]")
+		return fmt.Errorf("usage: cauteum sandbox connect <name> [--editor vscode|cursor] [-- cmd]")
 	}
 	if ed := strings.ToLower(strings.TrimSpace(opt.Editor)); ed != "" {
 		return a.openEditor(name, ed)
@@ -264,7 +264,7 @@ func (a *App) SSHProxy(opt SSHProxyOpts) error {
 		revoke = func() {
 			rctx, cancel := context.WithTimeout(context.Background(), TimeoutAPIShort)
 			defer cancel()
-			_ = c.RevokeSSHSession(rctx, sess.SessionID)
+			_ = c.RevokeSSHSession(rctx, sess.Token)
 		}
 	} else if sandbox == "" {
 		sandbox = strings.TrimSpace(opt.Name)
@@ -282,7 +282,7 @@ func (a *App) SSHProxy(opt SSHProxyOpts) error {
 }
 
 // createSSHSessionWait retries while the supervisor relay comes up.
-func createSSHSessionWait(ctx context.Context, c *whaleshell.Client, name string, timeout time.Duration) (whaleshell.SSHSession, error) {
+func createSSHSessionWait(ctx context.Context, c *cauteum.Client, name string, timeout time.Duration) (cauteum.SSHSession, error) {
 	deadline := time.Now().Add(timeout)
 	warned := false
 	for {
@@ -292,8 +292,8 @@ func createSSHSessionWait(ctx context.Context, c *whaleshell.Client, name string
 		if err == nil {
 			return sess, nil
 		}
-		if !errors.Is(err, whaleshell.ErrSandboxNotReady) || time.Now().After(deadline) {
-			return whaleshell.SSHSession{}, fmt.Errorf("ssh-proxy: create ssh session for %q: %w", name, err)
+		if !errors.Is(err, cauteum.ErrSandboxNotReady) || time.Now().After(deadline) {
+			return cauteum.SSHSession{}, fmt.Errorf("ssh-proxy: create ssh session for %q: %w", name, err)
 		}
 		if !warned {
 			fmt.Fprintf(os.Stderr, "ssh-proxy: waiting for sandbox %s supervisor relay…\n", name)
@@ -301,7 +301,7 @@ func createSSHSessionWait(ctx context.Context, c *whaleshell.Client, name string
 		}
 		select {
 		case <-ctx.Done():
-			return whaleshell.SSHSession{}, ctx.Err()
+			return cauteum.SSHSession{}, ctx.Err()
 		case <-time.After(time.Second):
 		}
 	}
@@ -354,7 +354,7 @@ func (a *App) openSSHClient(ctx context.Context, sandbox string) (*ssh.Client, f
 	revoke := func() {
 		rctx, cancel := context.WithTimeout(context.Background(), TimeoutAPIShort)
 		defer cancel()
-		_ = c.RevokeSSHSession(rctx, sess.SessionID)
+		_ = c.RevokeSSHSession(rctx, sess.Token)
 	}
 	conn, err := DialSSHRelay(ctx, gwURL, sess.SandboxID, sess.Token)
 	if err != nil {

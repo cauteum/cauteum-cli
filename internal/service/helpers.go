@@ -8,19 +8,19 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"github.com/whaleshell/whaleshell-driver/driver"
+	"github.com/cauteum/cauteum-driver/driver"
 )
 
 // Linux helper binaries mounted into sandboxes and proxy sidecars. Release
-// archives ship them under <prefix>/libexec/whaleshell/linux-<arch>/ next to
-// <prefix>/bin/whaleshell; source checkouts cross-compile them on demand.
+// archives ship them under <prefix>/libexec/cauteum/linux-<arch>/ next to
+// <prefix>/bin/cauteum; source checkouts cross-compile them on demand.
 const (
-	helperCLI  = "whaleshell"
-	helperInit = "whaleshell-init"
-	helperSSHD = "whaleshell-sshd"
+	helperCLI  = "cauteum"
+	helperInit = "cauteum-init"
+	helperSSHD = "cauteum-sshd"
 
 	// EnvHelpersDir pins the directory holding linux helpers (no fallbacks).
-	EnvHelpersDir = "WHALESHELL_HELPERS_DIR"
+	EnvHelpersDir = "CAUTEUM_HELPERS_DIR"
 )
 
 // helperDirs lists where bundled linux helpers may live for this install.
@@ -36,7 +36,7 @@ func helperDirs() []string {
 		exe = r
 	}
 	dir := filepath.Dir(exe)
-	sub := filepath.Join("libexec", "whaleshell", "linux-"+runtime.GOARCH)
+	sub := filepath.Join("libexec", "cauteum", "linux-"+runtime.GOARCH)
 	return []string{
 		filepath.Join(dir, "..", sub),
 		filepath.Join(dir, sub),
@@ -75,20 +75,20 @@ func resolveLinuxHelper(ctx context.Context, name, module string, build func(con
 			return exe, nil
 		}
 	}
-	return "", fmt.Errorf("linux %s helper not installed (%v); reinstall with install.sh (ships libexec/whaleshell/linux-%s) or set %s",
+	return "", fmt.Errorf("linux %s helper not installed (%v); reinstall with install.sh (ships libexec/cauteum/linux-%s) or set %s",
 		name, srcErr, runtime.GOARCH, EnvHelpersDir)
 }
 
 func ensureProxyBin(ctx context.Context) (string, error) {
-	return resolveLinuxHelper(ctx, helperCLI, "github.com/whaleshell/whaleshell-cli", driver.EnsureLinuxCLI)
+	return resolveLinuxHelper(ctx, helperCLI, "github.com/cauteum/cauteum-cli", driver.EnsureLinuxCLI)
 }
 
 func ensureInitBin(ctx context.Context) (string, error) {
-	return resolveLinuxHelper(ctx, helperInit, "github.com/whaleshell/whaleshell-runtime", driver.EnsureLinuxInit)
+	return resolveLinuxHelper(ctx, helperInit, "github.com/cauteum/cauteum-runtime", driver.EnsureLinuxInit)
 }
 
 func ensureSSHDBin(ctx context.Context) (string, error) {
-	return resolveLinuxHelper(ctx, helperSSHD, "github.com/whaleshell/whaleshell-runtime", driver.EnsureLinuxSSHD)
+	return resolveLinuxHelper(ctx, helperSSHD, "github.com/cauteum/cauteum-runtime", driver.EnsureLinuxSSHD)
 }
 
 // helperStatus reports where linux helpers come from, without building.
@@ -105,7 +105,7 @@ func helperStatus() string {
 	if len(missing) == 0 {
 		return "bundled (" + dir + ")"
 	}
-	if _, err := findModuleDir("github.com/whaleshell/whaleshell-runtime"); err == nil {
+	if _, err := findModuleDir("github.com/cauteum/cauteum-runtime"); err == nil {
 		if _, err := exec.LookPath("go"); err == nil {
 			return "source checkout (cross-compiled on demand)"
 		}

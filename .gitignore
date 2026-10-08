@@ -2,13 +2,13 @@
 *.test
 *.out
 /osg
-/whaleshell-init
-/whaleshell-gateway
+/cauteum-init
+/cauteum-gateway
 /osg-linux-*
 /osg-darwin-*
 /osg-windows-*
 .DS_Store
-/whaleshell-gateway-*
-/whaleshell-cli/
+/cauteum-gateway-*
+/cauteum-cli/
 /build/
 /dist/

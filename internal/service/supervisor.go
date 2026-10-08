@@ -8,12 +8,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/whaleshell/whaleshell-cli/internal/storage/gwconfig"
-	"github.com/whaleshell/whaleshell-core/policy"
-	"github.com/whaleshell/whaleshell-driver/driver"
-	"github.com/whaleshell/whaleshell-providers/provider"
-	"github.com/whaleshell/whaleshell-proxy/proxy"
-	"github.com/whaleshell/whaleshell-sdk/go/whaleshell"
+	"github.com/cauteum/cauteum-cli/internal/storage/gwconfig"
+	"github.com/cauteum/cauteum-core/policy"
+	"github.com/cauteum/cauteum-driver/driver"
+	"github.com/cauteum/cauteum-providers/provider"
+	"github.com/cauteum/cauteum-proxy/proxy"
+	"github.com/cauteum/cauteum-sdk/go/cauteum"
 )
 
 // attachSupervisor wires the proxy sidecar as the sandbox supervisor
@@ -37,8 +37,8 @@ func (a *App) attachSupervisor(ctx context.Context, spec *driver.Spec, doc polic
 	if len(attachedProviders) > 0 {
 		attached = attachedProviders[0]
 	}
-	if err := c.UpsertSandbox(ctx, whaleshell.Sandbox{Name: name, Image: spec.Image, Status: "creating", Labels: spec.Labels, AttachedProviders: attached}); err != nil {
-		return fmt.Errorf("register sandbox with gateway %s: %w (run: whaleshell gateway login)", gwURL, err)
+	if err := c.UpsertSandbox(ctx, cauteum.Sandbox{Name: name, Image: spec.Image, Status: "creating", Labels: spec.Labels, AttachedProviders: attached}); err != nil {
+		return fmt.Errorf("register sandbox with gateway %s: %w (run: cauteum gateway login)", gwURL, err)
 	}
 	tok, err := c.IssueSandboxToken(ctx, name)
 	if err != nil {
@@ -48,12 +48,12 @@ func (a *App) attachSupervisor(ctx context.Context, spec *driver.Spec, doc polic
 	if encoded := sandboxTokenGrants(ctx, c, name, gwURL); encoded != "" {
 		spec.ProxyEnv = append(spec.ProxyEnv, proxy.EnvTokenGrants+"="+encoded)
 	}
-	if socket := firstNonEmptyEnv("OPENSHELL_PROVIDER_SPIFFE_WORKLOAD_API_SOCKET", "WHALESHELL_PROVIDER_SPIFFE_WORKLOAD_API_SOCKET"); socket != "" {
-		spec.ProxyEnv = append(spec.ProxyEnv, "WHALESHELL_PROVIDER_SPIFFE_WORKLOAD_API_SOCKET="+strings.TrimPrefix(socket, "unix://"))
+	if socket := firstNonEmptyEnv("OPENSHELL_PROVIDER_SPIFFE_WORKLOAD_API_SOCKET", "CAUTEUM_PROVIDER_SPIFFE_WORKLOAD_API_SOCKET"); socket != "" {
+		spec.ProxyEnv = append(spec.ProxyEnv, "CAUTEUM_PROVIDER_SPIFFE_WORKLOAD_API_SOCKET="+strings.TrimPrefix(socket, "unix://"))
 	}
 	sshBin, err := ensureSSHDBin(ctx)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "sandbox create: warn: whaleshell-sshd unavailable (%v); SSH / IDE access disabled\n", err)
+		fmt.Fprintf(os.Stderr, "sandbox create: warn: cauteum-sshd unavailable (%v); SSH / IDE access disabled\n", err)
 		return nil
 	}
 	spec.SSHBin = sshBin
@@ -63,12 +63,13 @@ func (a *App) attachSupervisor(ctx context.Context, spec *driver.Spec, doc polic
 
 // sandboxTokenGrants packages only profile metadata for the proxy sidecar.
 // Subject token values remain in the gateway's encrypted credential store.
-func sandboxTokenGrants(ctx context.Context, c *whaleshell.Client, sandbox, gatewayURL string) string {
+func sandboxTokenGrants(ctx context.Context, c *cauteum.Client, sandbox, gatewayURL string) string {
 	sb, err := c.GetSandbox(ctx, sandbox)
 	if err != nil {
 		return ""
 	}
-	grants := map[string]proxy.TokenGrantCredential{}
+	providers := make(map[string]cauteum.ProviderRecord, len(sb.AttachedProviders))
+	profiles := make(map[string]provider.Profile, len(sb.AttachedProviders))
 	for _, name := range sb.AttachedProviders {
 		rec, err := c.GetProvider(ctx, name)
 		if err != nil {
@@ -76,6 +77,22 @@ func sandboxTokenGrants(ctx context.Context, c *whaleshell.Client, sandbox, gate
 		}
 		profile, err := tokenGrantProviderProfile(ctx, c, rec.Type, rec.Workspace)
 		if err != nil {
+			continue
+		}
+		providers[name], profiles[rec.Type] = rec, profile
+	}
+	return encodeSandboxTokenGrants(sb, providers, profiles)
+}
+
+func encodeSandboxTokenGrants(sb cauteum.Sandbox, providers map[string]cauteum.ProviderRecord, profiles map[string]provider.Profile) string {
+	grants := map[string]proxy.TokenGrantCredential{}
+	for _, name := range sb.AttachedProviders {
+		rec, ok := providers[name]
+		if !ok {
+			continue
+		}
+		profile, ok := profiles[rec.Type]
+		if !ok {
 			continue
 		}
 		for _, credential := range profile.Credentials {
@@ -114,7 +131,7 @@ func sandboxTokenGrants(ctx context.Context, c *whaleshell.Client, sandbox, gate
 	return string(b)
 }
 
-func tokenGrantProviderProfile(ctx context.Context, c *whaleshell.Client, id, workspace string) (provider.Profile, error) {
+func tokenGrantProviderProfile(ctx context.Context, c *cauteum.Client, id, workspace string) (provider.Profile, error) {
 	if workspace != "" {
 		if raw, _, _, err := c.GetProfileScoped(ctx, id, "workspace", workspace); err == nil {
 			if profile, parseErr := provider.ParseYAML(raw); parseErr == nil {

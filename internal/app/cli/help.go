@@ -56,13 +56,13 @@ func helpText(path []string) string {
 	return rootHelp
 }
 
-const rootHelp = `whaleshell — OpenShell-compatible agent sandbox CLI
+const rootHelp = `cauteum — OpenShell-compatible agent sandbox CLI
 
 Usage:
-  whaleshell [global flags] <command> [flags]
+  cauteum [global flags] <command> [flags]
 
 Global flags:
-  -g, --gateway NAME     Select gateway (or OPENSHELL_GATEWAY / WHALESHELL_GATEWAY)
+  -g, --gateway NAME     Select gateway (or OPENSHELL_GATEWAY / CAUTEUM_GATEWAY)
   --workspace NAME       Default workspace (or OPENSHELL_WORKSPACE)
   -o, --output FORMAT    text|json|yaml
 
@@ -88,33 +88,33 @@ Commands:
   completions        Shell completions
   version            Print version
 
-Run 'whaleshell <command> --help' for details.
+Run 'cauteum <command> --help' for details.
 `
 
 var helpTree = map[string]string{
-	"sandbox": `whaleshell sandbox — manage sandboxes
+	"sandbox": `cauteum sandbox — manage sandboxes
 
 Usage:
-  whaleshell sandbox create|list|get|stop|start|delete|exec|connect|upload|download|ssh-config|provider|template …
+  cauteum sandbox create|list|get|stop|start|delete|exec|connect|upload|download|ssh-config|provider|template …
 
 Aliases: sb
 
 Examples:
-  whaleshell sandbox create --name app --from ollama
-  whaleshell sandbox list
-  whaleshell sandbox exec app -- ls /
+  cauteum sandbox create --name app --from ollama
+  cauteum sandbox list
+  cauteum sandbox exec app -- ls /
 `,
-	"sandbox create": `whaleshell sandbox create — create a sandbox
+	"sandbox create": `cauteum sandbox create — create a sandbox
 
 Usage:
-  whaleshell sandbox create --name NAME [flags]
+  cauteum sandbox create --name NAME [flags]
 
 Flags (OpenShell-aligned):
   --name NAME
   --from base|ollama|cursor|claude|…
   --image IMAGE
   --policy PATH
-  --cpu N --memory SIZE   (or set defaults.memory in config / WHALESHELL_DEFAULT_MEMORY)
+  --cpu N --memory SIZE   (or set defaults.memory in config / CAUTEUM_DEFAULT_MEMORY)
   --pids-limit N          (-1 unlimited; default 2048 via driver)
   --provider NAME (repeatable)
   --forward PORT (repeatable)
@@ -122,159 +122,159 @@ Flags (OpenShell-aligned):
   --label KEY=VALUE
   --driver-config-json JSON
 `,
-	"sandbox template": `whaleshell sandbox template — workload templates
+	"sandbox template": `cauteum sandbox template — workload templates
 
 Usage:
-  whaleshell sandbox template create|list|get|delete …
+  cauteum sandbox template create|list|get|delete …
 `,
-	"sandbox provider": `whaleshell sandbox provider — attach providers to a sandbox
+	"sandbox provider": `cauteum sandbox provider — attach providers to a sandbox
 
 Usage:
-  whaleshell sandbox provider list|attach|detach …
+  cauteum sandbox provider list|attach|detach …
 `,
-	"provider": `whaleshell provider — provider instances
+	"provider": `cauteum provider — provider instances
 
 Usage:
-  whaleshell provider create|list|get|update|delete|profile|refresh|effective …
+  cauteum provider create|list|get|update|delete|profile|refresh|effective …
 
 Examples:
-  whaleshell provider create --name gh --type github --from-existing
-  whaleshell provider refresh configure NAME --credential-key K --strategy oauth2-refresh-token
+  cauteum provider create --name gh --type github --from-existing
+  cauteum provider refresh configure NAME --credential-key K --strategy oauth2-refresh-token
 `,
-	"provider profile": `whaleshell provider profile — custom provider YAML profiles
+	"provider profile": `cauteum provider profile — custom provider YAML profiles
 
 Usage:
-  whaleshell profile list|show|import|update|export|delete|lint …
-  whaleshell profile import --url https://example.org/profile.yaml
-  whaleshell profile import --from ./provider-profiles
+  cauteum profile list|show|import|update|export|delete|lint …
+  cauteum profile import --url https://example.org/profile.yaml
+  cauteum profile import --from ./provider-profiles
 `,
-	"profile": `whaleshell profile — reusable provider definitions
+	"profile": `cauteum profile — reusable provider definitions
 
 Usage:
-  whaleshell profile list|show|import|update|export|delete|lint …
+  cauteum profile list|show|import|update|export|delete|lint …
 `,
-	"provider refresh": `whaleshell provider refresh — credential refresh strategies
+	"provider refresh": `cauteum provider refresh — credential refresh strategies
 
 Usage:
-  whaleshell provider refresh status|configure|rotate|delete …
+  cauteum provider refresh status|configure|rotate|delete …
 
 Strategies: env | oauth2-refresh-token | oauth2-client-credentials | aws-sts-assume-role
 `,
-	"policy": `whaleshell policy — network policy
+	"policy": `cauteum policy — network policy
 
 Usage:
-  whaleshell policy get|set|update|list|delete|check …
+  cauteum policy get|set|update|list|delete|check …
 `,
-	"gateway": `whaleshell gateway — manage gateways
+	"gateway": `cauteum gateway — manage gateways
 
 Usage:
-  whaleshell gateway ensure|add|remove|select|info|list|login|logout
+  cauteum gateway ensure|add|remove|select|info|list|login|logout
 
   ensure   start/select local gateway on 127.0.0.1:7443 if needed
 `,
-	"workspace": `whaleshell workspace — workspaces (gateway-backed)
+	"workspace": `cauteum workspace — workspaces (gateway-backed)
 
 Usage:
-  whaleshell workspace create --name NAME
-  whaleshell workspace list|get|delete NAME
-  whaleshell workspace member add|remove|list …
+  cauteum workspace create --name NAME
+  cauteum workspace list|get|delete NAME
+  cauteum workspace member add|remove|list …
 `,
-	"workspace member": `whaleshell workspace member — manage members
+	"workspace member": `cauteum workspace member — manage members
 
 Usage:
-  whaleshell workspace member add --workspace NAME --subject SUBJECT [--role user|admin]
-  whaleshell workspace member remove --workspace NAME --subject SUBJECT
-  whaleshell workspace member list --workspace NAME
+  cauteum workspace member add --workspace NAME --subject SUBJECT [--role user|admin]
+  cauteum workspace member remove --workspace NAME --subject SUBJECT
+  cauteum workspace member list --workspace NAME
 `,
-	"service": `whaleshell service — expose HTTP services
+	"service": `cauteum service — expose HTTP services
 
 Usage:
-  whaleshell service expose <sandbox> <port> [name]
-  whaleshell service list|get|delete …
+  cauteum service expose <sandbox> <port> [name]
+  cauteum service list|get|delete …
 
 Edge URL (gateway Host router):
   http://<name>.openshell.localhost:<gateway-port>/
 `,
-	"forward": `whaleshell forward — TCP forwards into a sandbox
+	"forward": `cauteum forward — TCP forwards into a sandbox
 
 Usage:
-  whaleshell forward start <host-port> <sandbox> [-d]
-  whaleshell forward stop <id>
-  whaleshell forward list
+  cauteum forward start <host-port> <sandbox> [-d]
+  cauteum forward stop <id>
+  cauteum forward list
 `,
-	"inference": `whaleshell inference — inference.local routing
+	"inference": `cauteum inference — inference.local routing
 
 Usage:
-  whaleshell inference get|set|update|list|show|local
+  cauteum inference get|set|update|list|show|local
 `,
-	"settings": `whaleshell settings — key/value settings
+	"settings": `cauteum settings — key/value settings
 
 Usage:
-  whaleshell settings get|set|delete …
+  cauteum settings get|set|delete …
 `,
-	"logs": `whaleshell logs — sandbox logs
+	"logs": `cauteum logs — sandbox logs
 
 Usage:
-  whaleshell logs <name> [--tail] [-n N] [--since 5m]
+  cauteum logs <name> [--tail] [-n N] [--since 5m]
 `,
-	"doctor": `whaleshell doctor — environment checks
+	"doctor": `cauteum doctor — environment checks
 
 Usage:
-  whaleshell doctor check
-  whaleshell doctor cleanup [--dry-run|--yes]
+  cauteum doctor check
+  cauteum doctor cleanup [--dry-run|--yes]
 
 cleanup is a scoped dry-run by default. With --yes it removes only dangling
-anonymous Testcontainers volumes and stopped containers labeled whaleshell=1.
+anonymous Testcontainers volumes and stopped containers labeled cauteum=1.
 `,
-	"install": `whaleshell install — install CLI binary and ensure local gateway
+	"install": `cauteum install — install CLI binary and ensure local gateway
 
 Usage:
-  whaleshell install [--force]
+  cauteum install [--force]
 
-Copies whaleshell to ~/.local/share/whaleshell/bin, symlinks ~/.local/bin/whaleshell,
-then starts/selects a local whaleshell-gateway if needed.
+Copies cauteum to ~/.local/share/cauteum/bin, symlinks ~/.local/bin/cauteum,
+then starts/selects a local cauteum-gateway if needed.
 `,
-	"whoami": `whaleshell whoami — print identity
+	"whoami": `cauteum whoami — print identity
 
 Usage:
-  whaleshell whoami
-  whaleshell -o json whoami
+  cauteum whoami
+  cauteum -o json whoami
 `,
-	"completions": `whaleshell completions — shell completions
+	"completions": `cauteum completions — shell completions
 
 Usage:
-  whaleshell completions <bash|zsh|fish|powershell>
+  cauteum completions <bash|zsh|fish|powershell>
 `,
-	"status": `whaleshell status — gateway connectivity
+	"status": `cauteum status — gateway connectivity
 
 Usage:
-  whaleshell status
-  whaleshell -o json status
+  cauteum status
+  cauteum -o json status
 `,
-	"health": `whaleshell health — engine and gateway health probe
+	"health": `cauteum health — engine and gateway health probe
 
 Usage:
-  whaleshell health
-  whaleshell -o json health
+  cauteum health
+  cauteum -o json health
 `,
-	"init": `whaleshell init — write an agent starter policy
+	"init": `cauteum init — write an agent starter policy
 
 Usage:
-  whaleshell init --agent cursor [--dir DIR] [--force]
+  cauteum init --agent cursor [--dir DIR] [--force]
 `,
-	"exec": `whaleshell exec — execute a command in a sandbox
+	"exec": `cauteum exec — execute a command in a sandbox
 
 Usage:
-  whaleshell exec [--name] NAME -- COMMAND [ARG ...]
+  cauteum exec [--name] NAME -- COMMAND [ARG ...]
 `,
-	"term": `whaleshell term — interactive TUI
+	"term": `cauteum term — interactive TUI
 
 Usage:
-  whaleshell term
+  cauteum term
 `,
-	"rule": `whaleshell rule — approval rules (MVP)
+	"rule": `cauteum rule — approval rules (MVP)
 
 Usage:
-  whaleshell rule get|approve|approve-all|reject|history|clear …
+  cauteum rule get|approve|approve-all|reject|history|clear …
 `,
 }

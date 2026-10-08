@@ -1,5 +1,5 @@
-# whaleshell bash completions
-_whaleshell() {
+# cauteum bash completions
+_cauteum() {
     local current_word="${COMP_WORDS[COMP_CWORD]}"
     local -a commands=(
         version sandbox sb exec provider profile policy pol gateway gw logs lg term status
@@ -14,4 +14,4 @@ _whaleshell() {
     fi
 }
 
-complete -F _whaleshell whaleshell
+complete -F _cauteum cauteum

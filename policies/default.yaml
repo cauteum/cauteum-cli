@@ -1,7 +1,7 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 lkmavi
 # SPDX-License-Identifier: Apache-2.0
 #
-# Default whaleshell sandbox policy.
+# Default cauteum sandbox policy.
 
 version: 1
 filesystem_policy:
@@ -18,7 +18,7 @@ filesystem_policy:
   read_write:
   - /tmp
   - /dev/null
-  - /whaleshell/data
+  - /cauteum/data
   - /sandbox
   - /workspace
 landlock:

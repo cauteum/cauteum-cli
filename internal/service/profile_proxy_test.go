@@ -11,9 +11,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/whaleshell/whaleshell-core/policy"
-	"github.com/whaleshell/whaleshell-providers/provider"
-	"github.com/whaleshell/whaleshell-proxy/proxy"
+	"github.com/cauteum/cauteum-core/policy"
+	"github.com/cauteum/cauteum-providers/provider"
+	"github.com/cauteum/cauteum-proxy/proxy"
 )
 
 func TestOpenShellOpenAIProfileComposesAndRewritesMockRequest(t *testing.T) {
@@ -34,7 +34,7 @@ func TestOpenShellOpenAIProfileComposesAndRewritesMockRequest(t *testing.T) {
 	t.Cleanup(server.Close)
 
 	_, source, _, _ := runtime.Caller(0)
-	fixture := filepath.Join(filepath.Dir(source), "..", "..", "..", "whaleshell-providers", "provider", "testdata", "openshell", "openai.yaml")
+	fixture := filepath.Join(filepath.Dir(source), "..", "..", "..", "cauteum-providers", "provider", "testdata", "openshell", "openai.yaml")
 	profile, err := provider.LoadFile(fixture)
 	if err != nil {
 		t.Fatal(err)
@@ -65,7 +65,7 @@ func TestOpenShellOpenAIProfileComposesAndRewritesMockRequest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	req.Header.Set("Authorization", "Bearer whaleshell:resolve:env:OPENAI_API_KEY")
+	req.Header.Set("Authorization", "Bearer cauteum:resolve:env:OPENAI_API_KEY")
 	bound, err := proxy.SecretsForEndpoint(secrets, rules[0].CredentialKeys, proxy.PlaceholderKeysInRequest(req))
 	if err != nil {
 		t.Fatal(err)
@@ -83,7 +83,7 @@ func TestOpenShellOpenAIProfileComposesAndRewritesMockRequest(t *testing.T) {
 	}
 
 	wrongEndpoint, _ := http.NewRequest(http.MethodGet, server.URL+"/v1/models", nil)
-	wrongEndpoint.Header.Set("Authorization", "Bearer whaleshell:resolve:env:GH_TOKEN")
+	wrongEndpoint.Header.Set("Authorization", "Bearer cauteum:resolve:env:GH_TOKEN")
 	if _, err := proxy.SecretsForEndpoint(secrets, rules[0].CredentialKeys, proxy.PlaceholderKeysInRequest(wrongEndpoint)); !errors.Is(err, proxy.ErrCredentialEndpointMismatch) {
 		t.Fatalf("wrong endpoint credential binding error = %v", err)
 	}

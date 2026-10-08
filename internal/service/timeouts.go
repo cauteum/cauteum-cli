@@ -31,7 +31,7 @@ const (
 	// TimeoutCopy — docker cp style transfers.
 	TimeoutCopy = 5 * time.Minute
 
-	// TimeoutPolicyWait — whaleshell policy set --wait default cap.
+	// TimeoutPolicyWait — cauteum policy set --wait default cap.
 	TimeoutPolicyWait = 60 * time.Second
 
 	// TimeoutEmit — best-effort proc/log post (never block UX).

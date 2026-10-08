@@ -1,5 +1,5 @@
-#compdef whaleshell
-_whaleshell() {
+#compdef cauteum
+_cauteum() {
     local -a commands=(
         version sandbox sb exec provider profile policy pol gateway gw logs lg term status
         health init doctor dr whoami workspace ws forward fwd service svc settings
@@ -9,4 +9,4 @@ _whaleshell() {
     _describe 'command' commands
 }
 
-compdef _whaleshell whaleshell
+compdef _cauteum cauteum

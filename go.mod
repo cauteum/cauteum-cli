@@ -1,4 +1,4 @@
-module github.com/whaleshell/whaleshell-cli
+module github.com/cauteum/cauteum-cli
 
 go 1.27.0
 
@@ -6,14 +6,14 @@ require (
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/pelletier/go-toml/v2 v2.4.3
-	github.com/whaleshell/slogx v0.1.0-alpha.2
-	github.com/whaleshell/whaleshell-core v0.1.0-beta.1
-	github.com/whaleshell/whaleshell-display v0.1.0-alpha.2
-	github.com/whaleshell/whaleshell-driver v0.1.0-beta.1
-	github.com/whaleshell/whaleshell-providers v0.1.0-alpha.2
-	github.com/whaleshell/whaleshell-proxy v0.1.0-beta.1
-	github.com/whaleshell/whaleshell-runtime v0.1.0-beta.1
-	github.com/whaleshell/whaleshell-sdk v0.1.0-alpha.2
+	github.com/cauteum/slogx v0.1.0-alpha.2
+	github.com/cauteum/cauteum-core v0.1.0-beta.1
+	github.com/cauteum/cauteum-display v0.1.0-alpha.2
+	github.com/cauteum/cauteum-driver v0.1.0-beta.1
+	github.com/cauteum/cauteum-providers v0.1.0-alpha.2
+	github.com/cauteum/cauteum-proxy v0.1.0-beta.1
+	github.com/cauteum/cauteum-runtime v0.1.0-beta.1
+	github.com/cauteum/cauteum-sdk v0.1.0-alpha.2
 	golang.org/x/crypto v0.57.0
 	golang.org/x/sys v0.48.0
 	golang.org/x/term v0.46.0

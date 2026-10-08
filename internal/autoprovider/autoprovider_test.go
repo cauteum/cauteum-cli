@@ -3,7 +3,7 @@ package autoprovider_test
 import (
 	"testing"
 
-	"github.com/whaleshell/whaleshell-cli/internal/autoprovider"
+	"github.com/cauteum/cauteum-cli/internal/autoprovider"
 )
 
 func TestMergeOffIgnoresInferred(t *testing.T) {

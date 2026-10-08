@@ -1,4 +1,4 @@
-# Roadmap — whaleshell-cli
+# Roadmap — cauteum-cli
 
 Status: **v0.1.0-beta.2** (beta) · Depends on core / driver / proxy / runtime `v0.1.0-beta.1`; display / providers / SDK / slogx remain at `v0.1.0-alpha.2`
 

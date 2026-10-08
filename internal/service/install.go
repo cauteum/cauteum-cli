@@ -7,16 +7,16 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/whaleshell/whaleshell-core/defaults"
+	"github.com/cauteum/cauteum-core/defaults"
 )
 
-// InstallOpts for `whaleshell install`.
+// InstallOpts for `cauteum install`.
 type InstallOpts struct {
 	Force bool
 }
 
-// Install copies this binary into ~/.local/share/whaleshell/bin/whaleshell and symlinks
-// ~/.local/bin/whaleshell so the CLI is available from any directory.
+// Install copies this binary into ~/.local/share/cauteum/bin/cauteum and symlinks
+// ~/.local/bin/cauteum so the CLI is available from any directory.
 func (a *App) Install(opt InstallOpts) error {
 	src, err := os.Executable()
 	if err != nil {
@@ -31,10 +31,10 @@ func (a *App) Install(opt InstallOpts) error {
 	if err != nil {
 		return fmt.Errorf("install: home: %w", err)
 	}
-	shareBin := filepath.Join(home, ".local", "share", "whaleshell", "bin")
-	dst := filepath.Join(shareBin, "whaleshell")
+	shareBin := filepath.Join(home, ".local", "share", "cauteum", "bin")
+	dst := filepath.Join(shareBin, "cauteum")
 	linkDir := filepath.Join(home, ".local", "bin")
-	link := filepath.Join(linkDir, "whaleshell")
+	link := filepath.Join(linkDir, "cauteum")
 
 	if err := os.MkdirAll(shareBin, 0o755); err != nil {
 		return fmt.Errorf("install: mkdir %s: %w", shareBin, err)
@@ -60,11 +60,11 @@ func (a *App) Install(opt InstallOpts) error {
 		fmt.Printf("install: add %s to your PATH, e.g.:\n", linkDir)
 		fmt.Printf("  export PATH=\"%s:$PATH\"\n", linkDir)
 	} else {
-		fmt.Println("install: ok — run `whaleshell version` from any directory")
+		fmt.Println("install: ok — run `cauteum version` from any directory")
 	}
 	if err := a.GatewayEnsure(); err != nil {
 		fmt.Fprintf(os.Stderr, "install: gateway ensure: %v\n", err)
-		fmt.Fprintf(os.Stderr, "install: start manually: whaleshell-gateway --listen %s\n", defaults.GatewayListen)
+		fmt.Fprintf(os.Stderr, "install: start manually: cauteum-gateway --listen %s\n", defaults.GatewayListen)
 		return nil
 	}
 	return nil
@@ -77,7 +77,7 @@ func copyFileAtomic(src, dst string) error {
 	}
 	defer in.Close()
 
-	tmp, err := os.CreateTemp(filepath.Dir(dst), "whaleshell-install-*")
+	tmp, err := os.CreateTemp(filepath.Dir(dst), "cauteum-install-*")
 	if err != nil {
 		return err
 	}

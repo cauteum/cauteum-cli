@@ -1,4 +1,4 @@
-// Package gwconfig loads multi-gateway CLI config (~/.config/whaleshell/config.yaml).
+// Package gwconfig loads multi-gateway CLI config (~/.config/cauteum/config.yaml).
 package gwconfig
 
 import (
@@ -6,8 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/whaleshell/whaleshell-cli/internal/securefile"
-	"github.com/whaleshell/whaleshell-core/defaults"
+	"github.com/cauteum/cauteum-cli/internal/securefile"
+	"github.com/cauteum/cauteum-core/defaults"
 	"gopkg.in/yaml.v3"
 )
 
@@ -47,13 +47,13 @@ type Gateway struct {
 // Path returns the default config path.
 func Path() (string, error) {
 	if xdg := os.Getenv("XDG_CONFIG_HOME"); xdg != "" {
-		return filepath.Join(xdg, "whaleshell", "config.yaml"), nil
+		return filepath.Join(xdg, "cauteum", "config.yaml"), nil
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", err
 	}
-	return filepath.Join(home, ".config", "whaleshell", "config.yaml"), nil
+	return filepath.Join(home, ".config", "cauteum", "config.yaml"), nil
 }
 
 // Load reads config or returns empty defaults.
@@ -128,25 +128,25 @@ func ResolveImage(from, explicit string) (string, error) {
 	}
 	builtins := map[string]string{
 		"debian": defaults.ImageDebian,
-		// whaleshell catalog shorts (local). GHCR paths when WHALESHELL_USE_GHCR=1.
-		"base":           defaults.ImageLocal,
-		"whaleshell/cli": defaults.ImageLocal,
-		"whaleshell/gui": defaults.ImageGUI,
-		"whaleshell/gpu": defaults.ImageGPU,
-		"cursor":         defaults.ImageCursor,
-		"claude":         defaults.ImageClaude,
-		"codex":          defaults.ImageCodex,
+		// cauteum catalog shorts (local). GHCR paths when CAUTEUM_USE_GHCR=1.
+		"base":        defaults.ImageLocal,
+		"cauteum/cli": defaults.ImageLocal,
+		"cauteum/gui": defaults.ImageGUI,
+		"cauteum/gpu": defaults.ImageGPU,
+		"cursor":      defaults.ImageCursor,
+		"claude":      defaults.ImageClaude,
+		"codex":       defaults.ImageCodex,
 		// Opt-in NVIDIA OpenShell community interop.
 		"community/base":   "ghcr.io/nvidia/openshell-community/sandboxes/base:latest",
 		"community/ollama": "ghcr.io/nvidia/openshell-community/sandboxes/ollama:latest",
 		"ollama":           "ghcr.io/nvidia/openshell-community/sandboxes/ollama:latest",
 	}
-	// After images:pull / CI publish, set images.* in config or WHALESHELL_USE_GHCR=1 for GHCR builtins.
-	if os.Getenv("WHALESHELL_USE_GHCR") == "1" {
+	// After images:pull / CI publish, set images.* in config or CAUTEUM_USE_GHCR=1 for GHCR builtins.
+	if os.Getenv("CAUTEUM_USE_GHCR") == "1" {
 		builtins["base"] = defaults.ImageBaseRef
-		builtins["whaleshell/cli"] = defaults.ImageBaseRef
-		builtins["whaleshell/gui"] = defaults.ImageGUIRef
-		builtins["whaleshell/gpu"] = defaults.ImageGPURef
+		builtins["cauteum/cli"] = defaults.ImageBaseRef
+		builtins["cauteum/gui"] = defaults.ImageGUIRef
+		builtins["cauteum/gpu"] = defaults.ImageGPURef
 		builtins["cursor"] = defaults.ImageCursorRef
 		builtins["claude"] = defaults.ImageClaudeRef
 		builtins["codex"] = defaults.ImageCodexRef
@@ -154,5 +154,5 @@ func ResolveImage(from, explicit string) (string, error) {
 	if img, ok := builtins[from]; ok {
 		return img, nil
 	}
-	return "", fmt.Errorf("unknown --from %q (add images.%s to ~/.config/whaleshell/config.yaml)", from, from)
+	return "", fmt.Errorf("unknown --from %q (add images.%s to ~/.config/cauteum/config.yaml)", from, from)
 }

@@ -1,9 +1,9 @@
 # Claude / Codex-style agents
 
 Use builtin Anthropic + OpenAI presets **or** a `claude-code` provider instance.
-API keys stay on the host / gateway; the sandbox sees `whaleshell:resolve:env:…` placeholders.
+API keys stay on the host / gateway; the sandbox sees `cauteum:resolve:env:…` placeholders.
 
-**Запуск + providers:** [профили провайдеров](https://whaleshell.github.io/ru/guides/provider-profiles/).
+**Запуск + providers:** [профили провайдеров](https://cauteum.github.io/ru/guides/provider-profiles/).
 
 ## A. Inference presets in policy (no gateway provider)
 
@@ -11,27 +11,27 @@ API keys stay on the host / gateway; the sandbox sees `whaleshell:resolve:env:�
 export GOWORK=$PWD/go.work
 # keys on host for rewrite when using local proxy path — prefer gateway provider (B)
 
-whaleshell sandbox create --name agent-demo \
-  --policy whaleshell-cli/examples/claude-codex/policy.yaml \
+cauteum sandbox create --name agent-demo \
+  --policy cauteum-cli/examples/claude-codex/policy.yaml \
   --workspace .
 ```
 
 ## B. Gateway provider (рекомендуется)
 
 ```bash
-whaleshell-gateway --listen 127.0.0.1:7443 &
-whaleshell gateway add http://127.0.0.1:7443 --local --name local && whaleshell gateway select local
+cauteum-gateway --listen 127.0.0.1:7443 &
+cauteum gateway add http://127.0.0.1:7443 --local --name local && cauteum gateway select local
 
-ANTHROPIC_API_KEY=… whaleshell provider create --name claude --type claude-code --credential ANTHROPIC_API_KEY
+ANTHROPIC_API_KEY=… cauteum provider create --name claude --type claude-code --credential ANTHROPIC_API_KEY
 
-whaleshell sandbox create --name agent-demo \
-  --policy whaleshell-cli/examples/claude-codex/policy.yaml \
+cauteum sandbox create --name agent-demo \
+  --policy cauteum-cli/examples/claude-codex/policy.yaml \
   --workspace . \
   --gateway http://127.0.0.1:7443 \
   --provider claude
 
-whaleshell sandbox exec agent-demo -- env | grep -E 'ANTHROPIC|OPENAI'
-# expect: ANTHROPIC_API_KEY=whaleshell:resolve:env:ANTHROPIC_API_KEY
+cauteum sandbox exec agent-demo -- env | grep -E 'ANTHROPIC|OPENAI'
+# expect: ANTHROPIC_API_KEY=cauteum:resolve:env:ANTHROPIC_API_KEY
 ```
 
-Custom host model (vLLM): `inference.profiles` — see [provider profiles](https://whaleshell.github.io/guides/provider-profiles/).
+Custom host model (vLLM): `inference.profiles` — see [provider profiles](https://cauteum.github.io/guides/provider-profiles/).

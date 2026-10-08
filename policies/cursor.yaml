@@ -20,7 +20,7 @@ filesystem_policy:
   - /tmp
   - /dev/null
   - /workspace
-  - /whaleshell/data
+  - /cauteum/data
   - /sandbox
 landlock:
   compatibility: best_effort

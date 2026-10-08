@@ -4,26 +4,26 @@ import (
 	"context"
 	"testing"
 
-	"github.com/whaleshell/whaleshell-core/defaults"
-	"github.com/whaleshell/whaleshell-sdk/go/whaleshell"
+	"github.com/cauteum/cauteum-core/defaults"
+	"github.com/cauteum/cauteum-sdk/go/cauteum"
 )
 
-type providerEndpointStub struct{ record whaleshell.ProviderRecord }
+type providerEndpointStub struct{ record cauteum.ProviderRecord }
 
-func (s providerEndpointStub) GetProvider(context.Context, string) (whaleshell.ProviderRecord, error) {
+func (s providerEndpointStub) GetProvider(context.Context, string) (cauteum.ProviderRecord, error) {
 	return s.record, nil
 }
 func TestInferenceUpstreamConfiguration(t *testing.T) {
 	cases := []struct {
 		name   string
-		record whaleshell.ProviderRecord
+		record cauteum.ProviderRecord
 		want   string
 	}{
-		{"deepinfra", whaleshell.ProviderRecord{Type: "deepinfra"}, defaults.InferenceDeepInfra},
-		{"unknown", whaleshell.ProviderRecord{Type: "custom"}, ""},
-		{"override", whaleshell.ProviderRecord{Type: "custom", Config: whaleshell.ProviderConfig{"base_url": "https://models.example/v1"}}, "https://models.example/v1"},
-		{"invalid", whaleshell.ProviderRecord{Type: "openai", Config: whaleshell.ProviderConfig{"base_url": "file:///credentials"}}, ""},
-		{"userinfo", whaleshell.ProviderRecord{Type: "openai", Config: whaleshell.ProviderConfig{"base_url": "https://secret@models.example"}}, ""},
+		{"deepinfra", cauteum.ProviderRecord{Type: "deepinfra"}, defaults.InferenceDeepInfra},
+		{"unknown", cauteum.ProviderRecord{Type: "custom"}, ""},
+		{"override", cauteum.ProviderRecord{Type: "custom", Config: cauteum.ProviderConfig{"base_url": "https://models.example/v1"}}, "https://models.example/v1"},
+		{"invalid", cauteum.ProviderRecord{Type: "openai", Config: cauteum.ProviderConfig{"base_url": "file:///credentials"}}, ""},
+		{"userinfo", cauteum.ProviderRecord{Type: "openai", Config: cauteum.ProviderConfig{"base_url": "https://secret@models.example"}}, ""},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

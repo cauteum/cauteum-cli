@@ -1,23 +1,23 @@
-# SPDX-FileCopyrightText: Copyright (c) 2026 the whaleshell authors
+# SPDX-FileCopyrightText: Copyright (c) 2026 the cauteum authors
 # SPDX-License-Identifier: Apache-2.0
 #
-# Tagged releases for whaleshell-cli (and companion gateway binary).
+# Tagged releases for cauteum-cli (and companion gateway binary).
 # Corporate alpha/beta/rc tags are auto-marked as GitHub prereleases.
 version: 2
 
-project_name: whaleshell
+project_name: cauteum
 
 before:
   hooks:
     # Build both linux helper arches once. Archive `dst` is NOT templated by
     # GoReleaser, so every archive ships linux-amd64 + linux-arm64 under
-    # libexec/whaleshell/ (install.sh / sandboxes pick the needed arch).
-    - bash scripts/build-linux-helpers.sh {{ .Version }} build/helpers/libexec/whaleshell amd64 arm64
+    # libexec/cauteum/ (install.sh / sandboxes pick the needed arch).
+    - bash scripts/build-linux-helpers.sh {{ .Version }} build/helpers/libexec/cauteum amd64 arm64
 
 builds:
-  - id: whaleshell
-    main: ./cmd/whaleshell
-    binary: whaleshell
+  - id: cauteum
+    main: ./cmd/cauteum
+    binary: cauteum
     env:
       - CGO_ENABLED=0
     goos: [linux, darwin, windows]
@@ -27,12 +27,12 @@ builds:
         goarch: arm64
     ldflags:
       - -s -w
-      - -X github.com/whaleshell/whaleshell-cli/internal/service.BuildVersion={{.Version}}
+      - -X github.com/cauteum/cauteum-cli/internal/service.BuildVersion={{.Version}}
 
-  - id: whaleshell-gateway
-    dir: ../whaleshell-gateway
-    main: ./cmd/whaleshell-gateway
-    binary: whaleshell-gateway
+  - id: cauteum-gateway
+    dir: ../cauteum-gateway
+    main: ./cmd/cauteum-gateway
+    binary: cauteum-gateway
     env:
       - CGO_ENABLED=0
     goos: [linux, darwin]
@@ -42,9 +42,9 @@ builds:
 
 archives:
   - id: cli
-    # whaleshell-gateway rides along (linux/darwin) so `gateway ensure` works
+    # cauteum-gateway rides along (linux/darwin) so `gateway ensure` works
     # from a plain install.sh setup.
-    ids: [whaleshell, whaleshell-gateway]
+    ids: [cauteum, cauteum-gateway]
     # windows has no gateway build
     allow_different_binary_count: true
     name_template: >-
@@ -63,21 +63,21 @@ archives:
       - README*
       - install.sh
       # Literal dst (no {{ .Arch }} — GoReleaser does not expand templates in dst).
-      - src: build/helpers/libexec/whaleshell/linux-amd64/*
-        dst: libexec/whaleshell/linux-amd64
+      - src: build/helpers/libexec/cauteum/linux-amd64/*
+        dst: libexec/cauteum/linux-amd64
         strip_parent: true
         info:
           mode: 0755
-      - src: build/helpers/libexec/whaleshell/linux-arm64/*
-        dst: libexec/whaleshell/linux-arm64
+      - src: build/helpers/libexec/cauteum/linux-arm64/*
+        dst: libexec/cauteum/linux-arm64
         strip_parent: true
         info:
           mode: 0755
 
   - id: gateway
-    ids: [whaleshell-gateway]
+    ids: [cauteum-gateway]
     name_template: >-
-      whaleshell-gateway_
+      cauteum-gateway_
       {{- title .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else }}{{ .Arch }}{{ end }}
@@ -109,13 +109,13 @@ release:
     ## Install
 
     ```bash
-    curl -LsSf https://raw.githubusercontent.com/whaleshell/whaleshell-cli/main/install.sh | sh
+    curl -LsSf https://raw.githubusercontent.com/cauteum/cauteum-cli/main/install.sh | sh
     ```
 
     Pin a tag:
 
     ```bash
-    curl -LsSf https://raw.githubusercontent.com/whaleshell/whaleshell-cli/main/install.sh | WHALESHELL_VERSION={{ .Tag }} sh
+    curl -LsSf https://raw.githubusercontent.com/cauteum/cauteum-cli/main/install.sh | CAUTEUM_VERSION={{ .Tag }} sh
     ```
 
     **Alpha / pre-release:** APIs may change. See VERSIONING.md in the org hub.

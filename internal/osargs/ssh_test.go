@@ -4,7 +4,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/whaleshell/whaleshell-cli/internal/osargs"
+	"github.com/cauteum/cauteum-cli/internal/osargs"
 )
 
 func TestParseSSHProxyModes(t *testing.T) {

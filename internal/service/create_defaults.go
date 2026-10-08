@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: Copyright (c) 2026 whaleshell
+// SPDX-FileCopyrightText: Copyright (c) 2026 cauteum
 // SPDX-License-Identifier: Apache-2.0
 
 package service
@@ -8,13 +8,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/whaleshell/whaleshell-cli/internal/storage/gwconfig"
+	"github.com/cauteum/cauteum-cli/internal/storage/gwconfig"
 )
 
 const (
-	envDefaultMemory    = "WHALESHELL_DEFAULT_MEMORY"
-	envDefaultCPU       = "WHALESHELL_DEFAULT_CPU"
-	envDefaultPidsLimit = "WHALESHELL_DEFAULT_PIDS_LIMIT"
+	envDefaultMemory    = "CAUTEUM_DEFAULT_MEMORY"
+	envDefaultCPU       = "CAUTEUM_DEFAULT_CPU"
+	envDefaultPidsLimit = "CAUTEUM_DEFAULT_PIDS_LIMIT"
 )
 
 // applyCreateDefaults fills Memory/CPU/PidsLimit from config.yaml defaults then

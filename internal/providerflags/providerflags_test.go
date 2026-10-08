@@ -3,7 +3,7 @@ package providerflags_test
 import (
 	"testing"
 
-	"github.com/whaleshell/whaleshell-cli/internal/providerflags"
+	"github.com/cauteum/cauteum-cli/internal/providerflags"
 )
 
 func TestParseCreateOpenShell(t *testing.T) {

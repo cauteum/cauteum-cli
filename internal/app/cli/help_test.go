@@ -4,12 +4,12 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/whaleshell/whaleshell-cli/internal/service"
+	"github.com/cauteum/cauteum-cli/internal/service"
 )
 
 func TestHelpNested(t *testing.T) {
 	root := helpText(nil)
-	if root == "" || !strings.Contains(root, "whaleshell") {
+	if root == "" || !strings.Contains(root, "cauteum") {
 		t.Fatal("root help empty")
 	}
 	sb := helpText([]string{"sandbox"})
@@ -43,9 +43,9 @@ func TestSandboxCreateRejectsRemovedNoOpSSHFlag(t *testing.T) {
 	}
 }
 
-func TestCompletionsUseWhaleshellFunctionName(t *testing.T) {
+func TestCompletionsUseCauteumFunctionName(t *testing.T) {
 	for _, script := range []string{completionsBash, completionsZsh} {
-		if strings.Contains(script, "_osg") || !strings.Contains(script, "_whaleshell") {
+		if strings.Contains(script, "_osg") || !strings.Contains(script, "_cauteum") {
 			t.Fatalf("completion function name is stale: %q", script)
 		}
 	}

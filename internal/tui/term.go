@@ -1,4 +1,4 @@
-// Package tui implements `whaleshell term` — k9s-like sandbox browser with live agent observation.
+// Package tui implements `cauteum term` — k9s-like sandbox browser with live agent observation.
 package tui
 
 import (
@@ -12,8 +12,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/whaleshell/whaleshell-cli/internal/service"
-	"github.com/whaleshell/whaleshell-driver/driver"
+	"github.com/cauteum/cauteum-cli/internal/service"
+	"github.com/cauteum/cauteum-driver/driver"
 )
 
 var (
@@ -359,7 +359,7 @@ func (m model) View() string {
 
 func (m model) viewListPanel() string {
 	var b strings.Builder
-	b.WriteString(titleStyle.Render("whaleshell term") + "  " + statusStyle.Render(m.status) + "\n")
+	b.WriteString(titleStyle.Render("cauteum term") + "  " + statusStyle.Render(m.status) + "\n")
 	b.WriteString(helpStyle.Render("agent observation: press l for live OCSF / sandbox logs") + "\n\n")
 	if m.err != "" {
 		b.WriteString("error: " + m.err + "\n")
@@ -382,7 +382,7 @@ func (m model) viewListPanel() string {
 
 func (m model) viewLogsPanel() string {
 	var b strings.Builder
-	b.WriteString(titleStyle.Render("whaleshell term") + "  " + panelStyle.Render("observe:"+m.logName) + "  " + statusStyle.Render(m.status) + "\n")
+	b.WriteString(titleStyle.Render("cauteum term") + "  " + panelStyle.Render("observe:"+m.logName) + "  " + statusStyle.Render(m.status) + "\n")
 	b.WriteString(helpStyle.Render("live agent activity (OCSF NET/HTTP/PROC/CONFIG) · esc back · r restart · q quit") + "\n\n")
 	if m.logErr != "" {
 		b.WriteString(denyStyle.Render(m.logErr) + "\n")

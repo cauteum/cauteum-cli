@@ -6,10 +6,10 @@ import (
 	"log/slog"
 	"strings"
 
-	"github.com/whaleshell/slogx"
-	"github.com/whaleshell/whaleshell-cli/internal/storage/gwconfig"
-	"github.com/whaleshell/whaleshell-driver/driver"
-	"github.com/whaleshell/whaleshell-sdk/go/whaleshell"
+	"github.com/cauteum/cauteum-cli/internal/storage/gwconfig"
+	"github.com/cauteum/cauteum-driver/driver"
+	"github.com/cauteum/cauteum-sdk/go/cauteum"
+	"github.com/cauteum/slogx"
 )
 
 // SandboxStop stops a sandbox without deleting network/volume.
@@ -75,7 +75,7 @@ func (a *App) touchGateway(ctx context.Context, name, id, image, network, status
 	if u == "" {
 		return
 	}
-	_ = a.clientFor(u).UpsertSandbox(ctx, whaleshell.Sandbox{
+	_ = a.clientFor(u).UpsertSandbox(ctx, cauteum.Sandbox{
 		Name: name, ID: id, Image: image, Network: network, Status: status, Labels: labels,
 	})
 }
@@ -113,7 +113,7 @@ func (a *App) Copy(src, dst string) error {
 		}
 		fmt.Printf("cp: %s:%s → %s\n", sName, sPath, dst)
 	default:
-		return fmt.Errorf("usage: whaleshell cp <local> <sandbox>:/path  OR  whaleshell cp <sandbox>:/path <local>")
+		return fmt.Errorf("usage: cauteum cp <local> <sandbox>:/path  OR  cauteum cp <sandbox>:/path <local>")
 	}
 	return nil
 }

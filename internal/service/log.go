@@ -4,8 +4,8 @@ import (
 	"context"
 	"log/slog"
 
-	"github.com/whaleshell/slogx"
-	"github.com/whaleshell/whaleshell-cli/internal/logger"
+	"github.com/cauteum/cauteum-cli/internal/logger"
+	"github.com/cauteum/slogx"
 )
 
 // opLogger returns a context logger tagged with a stable operation name

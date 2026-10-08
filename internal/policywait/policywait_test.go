@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/whaleshell/whaleshell-cli/internal/policywait"
+	"github.com/cauteum/cauteum-cli/internal/policywait"
 )
 
 func TestFileAppliedSuccess(t *testing.T) {
