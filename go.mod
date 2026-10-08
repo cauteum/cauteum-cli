@@ -3,26 +3,28 @@ module github.com/cauteum/cauteum-cli
 go 1.27.0
 
 require (
+	github.com/NVIDIA/OpenShell/sdk/go v0.0.0-20260909233434-a0814443f19c
+	github.com/cauteum/cauteum-core v0.1.0-beta.1.0.20261008213715-9b32ff965bef
+	github.com/cauteum/cauteum-display v0.1.0-alpha.2.0.20261008214133-e082e41bf28a
+	github.com/cauteum/cauteum-driver v0.1.0-beta.1.0.20261008214530-d244c3ac7e41
+	github.com/cauteum/cauteum-gateway v0.1.0-beta.1.0.20261008214653-dd3919db019f
+	github.com/cauteum/cauteum-providers v0.1.0-alpha.2.0.20261008214532-1b3297f6bfe9
+	github.com/cauteum/cauteum-proxy v0.1.0-beta.1.0.20261008214534-e0620208414a
+	github.com/cauteum/cauteum-runtime v0.1.0-beta.1.0.20261008214610-c965139e3cb4
+	github.com/cauteum/cauteum-sdk v0.1.0-alpha.2.0.20261008214716-843102c554b2
+	github.com/cauteum/slogx v0.1.0-alpha.2.0.20261008213740-b3c4da34847b
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
 	github.com/pelletier/go-toml/v2 v2.4.3
-	github.com/cauteum/slogx v0.1.0-alpha.2
-	github.com/cauteum/cauteum-core v0.1.0-beta.1
-	github.com/cauteum/cauteum-display v0.1.0-alpha.2
-	github.com/cauteum/cauteum-driver v0.1.0-beta.1
-	github.com/cauteum/cauteum-providers v0.1.0-alpha.2
-	github.com/cauteum/cauteum-proxy v0.1.0-beta.1
-	github.com/cauteum/cauteum-runtime v0.1.0-beta.1
-	github.com/cauteum/cauteum-sdk v0.1.0-alpha.2
 	golang.org/x/crypto v0.57.0
 	golang.org/x/sys v0.48.0
 	golang.org/x/term v0.46.0
+	google.golang.org/grpc v1.84.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
 	github.com/Microsoft/go-winio v0.6.2 // indirect
-	github.com/NVIDIA/OpenShell/sdk/go v0.0.0-20260909233434-a0814443f19c // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/charmbracelet/colorprofile v0.2.3-0.20250311203215-f60798e515dc // indirect
@@ -63,8 +65,9 @@ require (
 	go.opentelemetry.io/otel/metric v1.47.0 // indirect
 	go.opentelemetry.io/otel/trace v1.47.0 // indirect
 	golang.org/x/net v0.58.0 // indirect
+	golang.org/x/oauth2 v0.36.0 // indirect
+	golang.org/x/sync v0.23.0 // indirect
 	golang.org/x/text v0.42.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260706201446-f0a921348800 // indirect
-	google.golang.org/grpc v1.84.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 )
