@@ -20,9 +20,9 @@ func (s *policyTestServer) ListPolicyProposals(_ context.Context, _ *controlv1.L
 		{Id: "ordinary", Status: "pending"}, {Id: "flagged", Status: "pending", SecurityFlagged: true},
 	}}, nil
 }
-func (s *policyTestServer) ApprovePolicyProposal(_ context.Context, req *controlv1.ApprovePolicyProposalRequest) (*controlv1.GetPolicyProposalResponse, error) {
+func (s *policyTestServer) ApprovePolicyProposal(_ context.Context, req *controlv1.ApprovePolicyProposalRequest) (*controlv1.ApprovePolicyProposalResponse, error) {
 	s.approved[req.Id] = true
-	return &controlv1.GetPolicyProposalResponse{Proposal: &controlv1.PolicyProposalSummary{Id: req.Id, SandboxName: "demo", Status: "approved"}}, nil
+	return &controlv1.ApprovePolicyProposalResponse{Proposal: &controlv1.PolicyProposalSummary{Id: req.Id, SandboxName: "demo", Status: "approved"}}, nil
 }
 func (s *policyTestServer) GetPolicyProposal(_ context.Context, req *controlv1.GetPolicyProposalRequest) (*controlv1.GetPolicyProposalResponse, error) {
 	return &controlv1.GetPolicyProposalResponse{Proposal: &controlv1.PolicyProposalSummary{Id: req.Id, SandboxName: "demo", Status: "pending"}}, nil
