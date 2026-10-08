@@ -1,8 +1,8 @@
 # SPDX-FileCopyrightText: Copyright (c) 2026 the whaleshell authors
 # SPDX-License-Identifier: Apache-2.0
 #
-# Nightly multi-arch binaries → GitHub Release tag `nightly` (always prerelease).
-# Install: curl …/install.sh | WHALESHELL_VERSION=nightly sh
+# Manual nightly multi-arch binaries → GitHub Release tag `nightly`.
+# Kept manual so the Releases page stays focused on the latest tested beta.
 name: Nightly
 
 env:
@@ -10,9 +10,6 @@ env:
   GOWORK: ${{ github.workspace }}/go.work
 
 on:
-  schedule:
-    # 06:00 UTC
-    - cron: "0 6 * * *"
   workflow_dispatch:
 
 permissions:
@@ -182,7 +179,7 @@ jobs:
           body: |
             Automated nightly build from `main` (workspace modules).
 
-            **Not a stable release.** Prefer tagged `v0.x.y-alpha.N` for pinned alphas.
+            **Not a stable release.** Prefer the latest tested beta for installations.
 
             ### Install
             ```bash
