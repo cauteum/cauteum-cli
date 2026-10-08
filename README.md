@@ -6,9 +6,8 @@
 </p>
 <p align="center">
   <a href="https://github.com/whaleshell/whaleshell-cli/actions/workflows/ci.yml"><img src="https://github.com/whaleshell/whaleshell-cli/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/whaleshell/whaleshell-cli/actions/workflows/nightly.yml"><img src="https://github.com/whaleshell/whaleshell-cli/actions/workflows/nightly.yml/badge.svg" alt="Nightly"></a>
   <a href="https://github.com/whaleshell/whaleshell-cli/releases"><img src="https://img.shields.io/github/v/release/whaleshell/whaleshell-cli?include_prereleases&sort=semver&label=release" alt="release"></a>
-  <a href="https://img.shields.io/badge/status-alpha-critical"><img src="https://img.shields.io/badge/status-alpha-critical" alt="alpha"></a>
+  <a href="https://img.shields.io/badge/status-beta-blueviolet"><img src="https://img.shields.io/badge/status-beta-blueviolet" alt="beta"></a>
   <a href="https://www.apache.org/licenses/LICENSE-2.0"><img src="https://img.shields.io/badge/License-Apache--2.0-blue.svg" alt="License"></a>
   <a href="https://github.com/whaleshell/whaleshell-cli"><img src="https://img.shields.io/badge/Go-1.27+-00ADD8?logo=go" alt="Go Version"></a>
 </p>
@@ -39,19 +38,14 @@ The [quick start](https://whaleshell.github.io/get-started/) contains the suppor
 
 ## Installation
 
-One command (OpenShell-style) — binary for your OS/arch into `~/.local/bin`:
+Install the current beta (`v0.1.0-beta.2`) into `~/.local/bin`:
 
 ```bash
-curl -LsSf https://raw.githubusercontent.com/whaleshell/whaleshell-cli/main/install.sh | sh
+curl -LsSf https://raw.githubusercontent.com/whaleshell/whaleshell-cli/main/install.sh \
+  | WHALESHELL_VERSION=v0.1.0-beta.2 sh
 ```
 
-| Want | Command |
-|------|---------|
-| Latest release | `curl … \| sh` |
-| Pin alpha | `curl … \| WHALESHELL_VERSION=v0.1.0-alpha.1 sh` |
-| Nightly | `curl … \| WHALESHELL_VERSION=nightly sh` |
-
-From source in the [multi-repo workspace](https://github.com/whaleshell) (the published Go dependency set does not yet build standalone):
+From source in the [multi-repo workspace](https://github.com/whaleshell):
 
 ```bash
 go build -C whaleshell-cli -o ../whaleshell ./cmd/whaleshell
@@ -60,7 +54,7 @@ go build -C whaleshell-cli -o ../whaleshell ./cmd/whaleshell
 
 **Requirements:** Docker or Podman. Go 1.27+ only if building from source.
 
-Alpha releases are GitHub **Pre-releases** (`v0.1.0-alpha.N`); nightlies overwrite the `nightly` tag. See [development and releases](https://whaleshell.github.io/reference/development/).
+`v0.1.0-beta.2` is a GitHub prerelease. It builds from published module dependencies; OpenShell behavioral compatibility remains partial. See [development and releases](https://whaleshell.github.io/reference/development/) and the [compatibility status](https://whaleshell.github.io/reference/openshell-compatibility/).
 
 ---
 

@@ -8,8 +8,8 @@
 #   curl -LsSf https://raw.githubusercontent.com/whaleshell/whaleshell-cli/main/install.sh | sh
 #
 # Environment:
-#   WHALESHELL_VERSION      Release tag (default: latest non-draft release; use
-#                           "nightly" for the moving nightly build)
+#   WHALESHELL_VERSION      Release tag (default: latest published release;
+#                           "nightly" is available only when manually published)
 #   WHALESHELL_INSTALL_DIR  Install directory (default: ~/.local/bin)
 #   WHALESHELL_REPO         Override owner/name (default: whaleshell/whaleshell-cli)
 #   WHALESHELL_RELEASE_URL  Base URL holding <tag>/<archive> (mirror / air-gapped;
@@ -87,7 +87,7 @@ resolve_version() {
     fi
   fi
   rm -f "$_json"
-  # Include prereleases (alpha) when no stable "latest" exists yet.
+  # Include prereleases when no stable "latest" exists yet.
   _json="$(mktemp)"
   download "${API_URL}/releases?per_page=5" "$_json" || error "cannot list releases"
   _tag="$(sed -n 's/.*"tag_name":[[:space:]]*"\([^"]*\)".*/\1/p' "$_json" | head -1)"
