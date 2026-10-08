@@ -1,6 +1,6 @@
 # Roadmap — whaleshell-cli
 
-Status: **v0.1.0-alpha.2** (alpha) · Depends on whaleshell-core / providers / SDK / gateway `v0.1.0-alpha.2` and the remaining module set `v0.1.0-alpha.1`
+Status: **v0.1.0-beta.2** (beta) · Depends on core / driver / proxy / runtime `v0.1.0-beta.1`; display / providers / SDK / slogx remain at `v0.1.0-alpha.2`
 
 ## This module
 

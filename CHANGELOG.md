@@ -1,5 +1,11 @@
 # Changelog
 
+## [v0.1.0-beta.2] - 2026-10-08
+
+### Changed
+
+- Update the driver dependency to v0.1.0-beta.1, including the platform-specific Docker isolation and executable checks.
+
 ## [v0.1.0-beta.1] - 2026-10-07
 
 ### Added

@@ -94,8 +94,8 @@ github.com/whaleshell/whaleshell-core v0.1.0-beta.1 h1:cv0jdhUE5flcdczKoYR01g3WF
 github.com/whaleshell/whaleshell-core v0.1.0-beta.1/go.mod h1:MQx5n7RmvA+sGkwJ2HaPrEdYOmVNDGimx1EpO/tqBww=
 github.com/whaleshell/whaleshell-display v0.1.0-alpha.2 h1:AzOPp+GFGrLVDVNgv18zOvsUsKsFUIr8aoLSLE/RGiY=
 github.com/whaleshell/whaleshell-display v0.1.0-alpha.2/go.mod h1:yOchtpCUwc7VVoEImGmFvhDhp1YEK1DtKwHNA2iKxGY=
-github.com/whaleshell/whaleshell-driver v0.1.0-alpha.2 h1:wr+mBqC1aWcj0RqeWIctTMWGpopd62H39nSw15kYkKE=
-github.com/whaleshell/whaleshell-driver v0.1.0-alpha.2/go.mod h1:4RcBinLOXrMFgpeivkAeaQ/k0qexQAiKGi5ZXgY6C2g=
+github.com/whaleshell/whaleshell-driver v0.1.0-beta.1 h1:KnfrYm6HnVJ13zRVlneWHrrtU9q1gRvXodouAI9GpJ8=
+github.com/whaleshell/whaleshell-driver v0.1.0-beta.1/go.mod h1:AHdhSR/cau5afpAXz+ynN10yRxg9gouzhKhBkAAN6NA=
 github.com/whaleshell/whaleshell-providers v0.1.0-alpha.2 h1:w4gcAtFxaTVNBoRuv/K9JSmlSHjD8rd1ST4V3q0yylI=
 github.com/whaleshell/whaleshell-providers v0.1.0-alpha.2/go.mod h1:65bz2szvJxZAq+0+PgydFFHj0QhOCM8Gx07ZUdHb33c=
 github.com/whaleshell/whaleshell-proxy v0.1.0-beta.1 h1:lViNnhlQtsfa4ZA5RyvWKsuBvk1Zg94T1C09Z778Bzo=
