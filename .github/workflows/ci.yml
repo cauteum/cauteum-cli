@@ -547,15 +547,41 @@ jobs:
           path: cauteum-cli
           fetch-depth: 0
 
+      - name: Checkout cauteum-driver candidate
+        uses: actions/checkout@v4
+        with:
+          repository: cauteum/cauteum-driver
+          path: cauteum-driver
+          ref: 6e20cf9b7a483a2b92144e821ffcc68e4cb5cebe
+
+      - name: Checkout cauteum-gateway candidate
+        uses: actions/checkout@v4
+        with:
+          repository: cauteum/cauteum-gateway
+          path: cauteum-gateway
+          ref: b3d30c1a0375383cd851fcaa9041fde9621401d8
+
+      - name: Checkout cauteum-runtime candidate
+        uses: actions/checkout@v4
+        with:
+          repository: cauteum/cauteum-runtime
+          path: cauteum-runtime
+          ref: 080a573fb5cdb46a69cf2cddb38e92bf0757c063
+
+      - name: Checkout cauteum-sdk candidate
+        uses: actions/checkout@v4
+        with:
+          repository: cauteum/cauteum-sdk
+          path: cauteum-sdk
+          ref: 5343d7c5d8b76e900fc5b439c074cd3445756606
+
       - name: Checkout sibling modules
         run: |
           set -euo pipefail
-          for m in cauteum-core cauteum-display cauteum-driver cauteum-providers \
-                   cauteum-proxy cauteum-runtime cauteum-sdk slogx; do
+          for m in cauteum-core cauteum-display cauteum-providers cauteum-proxy; do
             git clone --depth 1 "https://github.com/cauteum/${m}.git" "${m}"
           done
-          git clone --depth 1 --branch main \
-            https://github.com/cauteum/cauteum-gateway.git cauteum-gateway
+          git clone --depth 1 https://github.com/cauteum/slogx.git slogx
 
       - name: Write go.work
         working-directory: ${{ github.workspace }}
