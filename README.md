@@ -49,6 +49,7 @@ From source in the [multi-repo workspace](https://github.com/cauteum):
 
 ```bash
 go build -C cauteum-cli -o ../cauteum ./cmd/cauteum
+go build -C cauteum-cli -o ../cauteum-console ./cmd/cauteum-console
 ./cauteum install
 ```
 
@@ -80,6 +81,24 @@ prune:
 Only dangling anonymous test volumes and stopped containers labeled
 `cauteum=1` are in scope.
 
+### Browser console
+
+The Go console uses the public Go SDK and keeps OIDC tokens in server-side
+sessions. Local development can use the loopback auth bootstrap:
+
+```bash
+./cauteum-console \
+  -listen 127.0.0.1:8080 \
+  -public-url http://127.0.0.1:8080 \
+  -gateway http://127.0.0.1:7443
+```
+
+For a network deployment, set an HTTPS `-public-url`, configure gateway OIDC,
+and publish the console and gateway through the same trusted ingress. The
+console supports workspace inventory, overview, sandbox detail/logs, and
+create/start/stop/delete actions. The gateway remains the authorization and
+policy boundary.
+
 ### Cursor agent
 
 ```bash
@@ -98,7 +117,9 @@ Runnable recipes live in [`examples/`](./examples/).
 | Path | Purpose |
 |------|---------|
 | `cmd/cauteum` | CLI entrypoint |
+| `cmd/cauteum-console` | Go browser console entrypoint |
 | `internal/app` | Commands (sandbox, proxy, gateway, rules, …) |
+| `internal/console` | Server-side sessions, OIDC PKCE, handlers, templates, and assets |
 | `policies/` | Builtin policy YAML |
 | `docker/agents/` | cursor / claude / codex images |
 

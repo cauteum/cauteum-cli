@@ -596,14 +596,7 @@ func (a *App) ServiceExpose(sandbox, name, port string) error {
 				edgeURL = fmt.Sprintf("http://%s.openshell.localhost:%d/", name, gwPort)
 			}
 		}
-		rec := cauteum.ServiceRecord{
-			Name:        name,
-			Sandbox:     sandbox,
-			Port:        guestPort,
-			BackendHost: backendHost,
-			BackendPort: backendPort,
-		}
-		if _, err := c.PutService(ctx, rec); err == nil {
+		if _, err := c.ExposeService(ctx, sandbox, name, uint32(guestPort)); err == nil {
 			fmt.Printf("service %s exposed on %s:%d\n", name, sandbox, guestPort)
 			fmt.Printf("  %s\n", edgeURL)
 			fmt.Printf("  http://%s.cauteum.localhost:%d/\n", name, gwPort)
