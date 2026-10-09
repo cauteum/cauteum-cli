@@ -8,12 +8,12 @@ require (
 	github.com/NVIDIA/OpenShell/sdk/go v0.0.0-20260909233434-a0814443f19c
 	github.com/cauteum/cauteum-core v0.1.0-beta.1.0.20261008213715-9b32ff965bef
 	github.com/cauteum/cauteum-display v0.1.0-alpha.2.0.20261008214133-e082e41bf28a
-	github.com/cauteum/cauteum-driver v0.1.0-beta.1.0.20261008214530-d244c3ac7e41
-	github.com/cauteum/cauteum-gateway v0.1.0-beta.1.0.20261008215254-5e20fa2f6943
+	github.com/cauteum/cauteum-driver v0.1.0-beta.1.0.20261009203705-6e20cf9b7a48
+	github.com/cauteum/cauteum-gateway v0.1.0-beta.1.0.20261009203313-b3d30c1a0375
 	github.com/cauteum/cauteum-providers v0.1.0-alpha.2.0.20261008214532-1b3297f6bfe9
 	github.com/cauteum/cauteum-proxy v0.1.0-beta.1.0.20261008214534-e0620208414a
-	github.com/cauteum/cauteum-runtime v0.1.0-beta.1.0.20261008214610-c965139e3cb4
-	github.com/cauteum/cauteum-sdk v0.1.0-alpha.2.0.20261008215328-319fb095aa53
+	github.com/cauteum/cauteum-runtime v0.1.0-beta.1.0.20261009203723-080a573fb5cd
+	github.com/cauteum/cauteum-sdk v0.1.0-alpha.2.0.20261009204546-761495582ff7
 	github.com/cauteum/slogx v0.1.0-alpha.2.0.20261008213740-b3c4da34847b
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0
@@ -36,6 +36,8 @@ require (
 	github.com/containerd/errdefs v1.0.0 // indirect
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/distribution/reference v0.6.0 // indirect
+	github.com/docker/cli v28.2.2+incompatible // indirect
+	github.com/docker/docker-credential-helpers v0.9.5 // indirect
 	github.com/docker/go-connections v0.8.1 // indirect
 	github.com/docker/go-units v0.5.0 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
@@ -57,7 +59,9 @@ require (
 	github.com/muesli/termenv v0.16.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
+	github.com/pkg/errors v0.9.1 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
+	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/spiffe/go-spiffe/v2 v2.9.0 // indirect
 	github.com/xo/terminfo v0.0.0-20220910002029-abceb7e1c41e // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect

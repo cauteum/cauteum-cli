@@ -79,7 +79,7 @@ jobs:
         with:
           repository: cauteum/cauteum-sdk
           path: cauteum-sdk
-          ref: 5343d7c5d8b76e900fc5b439c074cd3445756606
+          ref: 761495582ff77492a5dc64aee906ef9d6355ba94
 
       - name: Checkout cauteum-gateway Control API
         uses: actions/checkout@v4
@@ -204,7 +204,7 @@ jobs:
         with:
           repository: cauteum/cauteum-sdk
           path: cauteum-sdk
-          ref: 5343d7c5d8b76e900fc5b439c074cd3445756606
+          ref: 761495582ff77492a5dc64aee906ef9d6355ba94
 
       - name: Checkout cauteum-gateway Control API
         uses: actions/checkout@v4
@@ -329,7 +329,7 @@ jobs:
         with:
           repository: cauteum/cauteum-sdk
           path: cauteum-sdk
-          ref: 5343d7c5d8b76e900fc5b439c074cd3445756606
+          ref: 761495582ff77492a5dc64aee906ef9d6355ba94
 
       - name: Checkout cauteum-gateway Control API
         uses: actions/checkout@v4
@@ -452,7 +452,7 @@ jobs:
         with:
           repository: cauteum/cauteum-sdk
           path: cauteum-sdk
-          ref: 5343d7c5d8b76e900fc5b439c074cd3445756606
+          ref: 761495582ff77492a5dc64aee906ef9d6355ba94
 
       - name: Checkout cauteum-gateway Control API
         uses: actions/checkout@v4
@@ -573,7 +573,7 @@ jobs:
         with:
           repository: cauteum/cauteum-sdk
           path: cauteum-sdk
-          ref: 5343d7c5d8b76e900fc5b439c074cd3445756606
+          ref: 761495582ff77492a5dc64aee906ef9d6355ba94
 
       - name: Checkout sibling modules
         run: |
