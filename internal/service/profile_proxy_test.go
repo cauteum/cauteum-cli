@@ -6,8 +6,6 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"path/filepath"
-	"runtime"
 	"strings"
 	"testing"
 
@@ -33,9 +31,25 @@ func TestOpenShellOpenAIProfileComposesAndRewritesMockRequest(t *testing.T) {
 	server.Start()
 	t.Cleanup(server.Close)
 
-	_, source, _, _ := runtime.Caller(0)
-	fixture := filepath.Join(filepath.Dir(source), "..", "..", "..", "cauteum-providers", "provider", "testdata", "openshell", "openai.yaml")
-	profile, err := provider.LoadFile(fixture)
+	profile, err := provider.ParseYAML([]byte(`id: mock-openai
+display_name: Mock OpenAI
+inference_capable: true
+credentials:
+  - name: api_key
+    env_vars: [OPENAI_API_KEY]
+    required: true
+    auth_style: bearer
+    header_name: authorization
+discovery:
+  credentials: [api_key]
+endpoints:
+  - host: api.openai.com
+    port: 443
+    protocol: rest
+    access: read-write
+    enforcement: enforce
+    tls: terminate
+`))
 	if err != nil {
 		t.Fatal(err)
 	}
