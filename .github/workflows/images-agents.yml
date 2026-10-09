@@ -137,6 +137,7 @@ jobs:
           set -euo pipefail
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -C cauteum-runtime -o images/sandbox/cauteum-init ./cmd/cauteum-init
           docker build -t "${LOCAL_BASE}" --target cli \
+            --build-arg DEBIAN_BASE=public.ecr.aws/docker/library/debian:bookworm@sha256:2c037a04925515fdd6ea85ea14a682d0e79931f5e9f5d07b6dbfc6ba12f9e858 \
             -f cauteum-runtime/images/sandbox/Dockerfile \
             cauteum-runtime/images/sandbox
       - name: Meta
