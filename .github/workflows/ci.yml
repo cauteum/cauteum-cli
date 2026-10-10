@@ -122,7 +122,7 @@ jobs:
               echo '  github.com/cauteum-haven/slogx v0.1.0-alpha.2 => ./slogx'
               echo '  github.com/cauteum-haven/slogx v0.1.0-beta.1 => ./slogx'
               echo '  github.com/cauteum-haven/slogx v0.1.0-beta.2 => ./slogx'
-              echo '  github.com/cauteum-haven/slogx v0.1.2 => ./slogx'
+            echo '  github.com/cauteum-haven/slogx v0.1.2 => ./slogx'
             fi
             echo ')'
           } > "${{ github.workspace }}/go.work"
@@ -249,7 +249,7 @@ jobs:
               echo '  github.com/cauteum-haven/slogx v0.1.0-alpha.2 => ./slogx'
               echo '  github.com/cauteum-haven/slogx v0.1.0-beta.1 => ./slogx'
               echo '  github.com/cauteum-haven/slogx v0.1.0-beta.2 => ./slogx'
-              echo '  github.com/cauteum-haven/slogx v0.1.2 => ./slogx'
+            echo '  github.com/cauteum-haven/slogx v0.1.2 => ./slogx'
             fi
             echo ')'
           } > "${{ github.workspace }}/go.work"
@@ -376,7 +376,7 @@ jobs:
               echo '  github.com/cauteum-haven/slogx v0.1.0-alpha.2 => ./slogx'
               echo '  github.com/cauteum-haven/slogx v0.1.0-beta.1 => ./slogx'
               echo '  github.com/cauteum-haven/slogx v0.1.0-beta.2 => ./slogx'
-              echo '  github.com/cauteum-haven/slogx v0.1.2 => ./slogx'
+            echo '  github.com/cauteum-haven/slogx v0.1.2 => ./slogx'
             fi
             echo ')'
           } > "${{ github.workspace }}/go.work"
@@ -501,7 +501,7 @@ jobs:
               echo '  github.com/cauteum-haven/slogx v0.1.0-alpha.2 => ./slogx'
               echo '  github.com/cauteum-haven/slogx v0.1.0-beta.1 => ./slogx'
               echo '  github.com/cauteum-haven/slogx v0.1.0-beta.2 => ./slogx'
-              echo '  github.com/cauteum-haven/slogx v0.1.2 => ./slogx'
+            echo '  github.com/cauteum-haven/slogx v0.1.2 => ./slogx'
             fi
             echo ')'
           } > "${{ github.workspace }}/go.work"
@@ -613,13 +613,15 @@ jobs:
             for d in cauteum-*; do echo "  github.com/cauteum-haven/${d} v0.1.0-alpha.1 => ./$d"; done
             for d in cauteum-*; do echo "  github.com/cauteum-haven/${d} v0.1.0-alpha.2 => ./$d"; done
             for d in cauteum-*; do echo "  github.com/cauteum-haven/${d} v0.1.0-beta.1 => ./$d"; done
-            for d in cauteum-*; do echo "  github.com/cauteum-haven/${d} v0.1.0-beta.2 => ./$d"
-                echo "  github.com/cauteum-haven/${d} v0.1.2 => ./$d"; done
+            for d in cauteum-*; do
+              echo "  github.com/cauteum-haven/${d} v0.1.0-beta.2 => ./$d"
+              echo "  github.com/cauteum-haven/${d} v0.1.2 => ./$d"
+            done
             echo '  github.com/cauteum-haven/slogx v0.1.0-alpha.1 => ./slogx'
             echo '  github.com/cauteum-haven/slogx v0.1.0-alpha.2 => ./slogx'
             echo '  github.com/cauteum-haven/slogx v0.1.0-beta.1 => ./slogx'
             echo '  github.com/cauteum-haven/slogx v0.1.0-beta.2 => ./slogx'
-              echo '  github.com/cauteum-haven/slogx v0.1.2 => ./slogx'
+            echo '  github.com/cauteum-haven/slogx v0.1.2 => ./slogx'
             echo ')'
           } > go.work
 
