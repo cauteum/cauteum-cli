@@ -21,7 +21,7 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ghcr.io/cauteum/cauteum/sandboxes
+  IMAGE_PREFIX: ghcr.io/cauteum-haven/cauteum/sandboxes
   # Local tag only — GHCR base is private to cauteum-runtime; buildx container
   # driver cannot pull it. Always build FROM a local docker-tagged base.
   LOCAL_BASE: cauteum-sandbox:base
@@ -85,19 +85,19 @@ jobs:
           replace (
             github.com/cauteum-haven/cauteum-runtime v0.1.0-alpha.1 => ./cauteum-runtime
             github.com/cauteum-haven/cauteum-runtime v0.1.0-alpha.2 => ./cauteum-runtime
-            github.com/cauteum-haven/cauteum-runtime v0.1.2 => ./cauteum-runtime
+            github.com/cauteum-haven/cauteum-runtime v0.1.4 => ./cauteum-runtime
             github.com/cauteum-haven/cauteum-core v0.1.0-alpha.1 => ./cauteum-core
             github.com/cauteum-haven/cauteum-core v0.1.0-alpha.2 => ./cauteum-core
-            github.com/cauteum-haven/cauteum-core v0.1.2 => ./cauteum-core
+            github.com/cauteum-haven/cauteum-core v0.1.4 => ./cauteum-core
             github.com/cauteum-haven/cauteum-driver v0.1.0-alpha.1 => ./cauteum-driver
             github.com/cauteum-haven/cauteum-driver v0.1.0-alpha.2 => ./cauteum-driver
-            github.com/cauteum-haven/cauteum-driver v0.1.2 => ./cauteum-driver
+            github.com/cauteum-haven/cauteum-driver v0.1.4 => ./cauteum-driver
             github.com/cauteum-haven/cauteum-proxy v0.1.0-alpha.1 => ./cauteum-proxy
             github.com/cauteum-haven/cauteum-proxy v0.1.0-alpha.2 => ./cauteum-proxy
-            github.com/cauteum-haven/cauteum-proxy v0.1.2 => ./cauteum-proxy
+            github.com/cauteum-haven/cauteum-proxy v0.1.4 => ./cauteum-proxy
             github.com/cauteum-haven/slogx v0.1.0-alpha.1 => ./slogx
             github.com/cauteum-haven/slogx v0.1.0-alpha.2 => ./slogx
-            github.com/cauteum-haven/slogx v0.1.2 => ./slogx
+            github.com/cauteum-haven/slogx v0.1.4 => ./slogx
           )
           EOF
           # strip leading spaces from heredoc body
