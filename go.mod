@@ -7,12 +7,12 @@ toolchain go1.27.2
 require (
 	github.com/NVIDIA/OpenShell/sdk/go v0.0.0-20260909233434-a0814443f19c
 	github.com/cauteum/cauteum-core v0.1.0-beta.2
-	github.com/cauteum/cauteum-display v0.1.0-alpha.2.0.20261008214133-e082e41bf28a
-	github.com/cauteum/cauteum-driver v0.1.0-beta.1.0.20261009203705-6e20cf9b7a48
-	github.com/cauteum/cauteum-gateway v0.1.0-beta.1.0.20261009203313-b3d30c1a0375
-	github.com/cauteum/cauteum-providers v0.1.0-alpha.2.0.20261008214532-1b3297f6bfe9
-	github.com/cauteum/cauteum-proxy v0.1.0-beta.1.0.20261008214534-e0620208414a
-	github.com/cauteum/cauteum-runtime v0.1.0-beta.1.0.20261009203723-080a573fb5cd
+	github.com/cauteum/cauteum-display v0.1.0-beta.1
+	github.com/cauteum/cauteum-driver v0.1.0-beta.2
+	github.com/cauteum/cauteum-gateway v0.1.0-beta.2
+	github.com/cauteum/cauteum-providers v0.1.0-beta.1
+	github.com/cauteum/cauteum-proxy v0.1.0-beta.2
+	github.com/cauteum/cauteum-runtime v0.1.0-beta.2
 	github.com/cauteum/cauteum-sdk v0.1.0-alpha.2.0.20261009204546-761495582ff7
 	github.com/cauteum/slogx v0.1.0-beta.1
 	github.com/charmbracelet/bubbletea v1.3.10
