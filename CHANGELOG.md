@@ -14,6 +14,7 @@
 
 - Pin Go module dependencies and CI checkouts to the matching Gateway, Driver, Runtime and SDK candidate commits.
 - Build sandbox agent images in CI from a digest-identical public ECR mirror to avoid Docker Hub rate limits.
+- Resolve `cauteum-core` v0.1.0-beta.2 and `slogx` v0.1.0-beta.1 from published tags.
 
 ### Fixed
 

@@ -4,8 +4,8 @@ github.com/NVIDIA/OpenShell/sdk/go v0.0.0-20260909233434-a0814443f19c h1:UPhoAjI
 github.com/NVIDIA/OpenShell/sdk/go v0.0.0-20260909233434-a0814443f19c/go.mod h1:zdG7v32UKU9U/zMxJ5F/nFRtUOpCUf0R6yu7k+adbxo=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1 h1:HwpRHbFMcZLEVr42D4p7XBqjyuxQH5SMiErDT4WkJ2k=
 github.com/aymanbagabas/go-osc52/v2 v2.0.1/go.mod h1:uYgXzlJ7ZpABp8OJ+exZzJJhRNQ2ASbcXHWsFqH8hp8=
-github.com/cauteum/cauteum-core v0.1.0-beta.1.0.20261008213715-9b32ff965bef h1:AZMkFLGHQKRVzVDNqkeKClP87du39xuQML2gyrt9Zh0=
-github.com/cauteum/cauteum-core v0.1.0-beta.1.0.20261008213715-9b32ff965bef/go.mod h1:r3Cz9AedbxCZREqVYIrvH82TrwoF/Uw3aZqYj7QSFGM=
+github.com/cauteum/cauteum-core v0.1.0-beta.2 h1:XBMEDKj8OFruw+cj6MCAQoC8/aNZ+c90s2W8CEStjWE=
+github.com/cauteum/cauteum-core v0.1.0-beta.2/go.mod h1:5AGbBVlwFMIT2mDruFMxzekJT/Fx/kdQZvbEtbGCR3s=
 github.com/cauteum/cauteum-display v0.1.0-alpha.2.0.20261008214133-e082e41bf28a h1:13HtIeW10YAIr2F/k1o49hNCv2GW/Tpk0fARS0Kaxi4=
 github.com/cauteum/cauteum-display v0.1.0-alpha.2.0.20261008214133-e082e41bf28a/go.mod h1:v5lCqgg9rOd/HsPEBgHpWf3x8XRZvs/cAhvXs8/EhoU=
 github.com/cauteum/cauteum-driver v0.1.0-beta.1.0.20261009203705-6e20cf9b7a48 h1:WAuqN4qy144HhEyef7m5O5koELiXqviBjfg35Hf3RU4=
@@ -20,8 +20,8 @@ github.com/cauteum/cauteum-runtime v0.1.0-beta.1.0.20261009203723-080a573fb5cd h
 github.com/cauteum/cauteum-runtime v0.1.0-beta.1.0.20261009203723-080a573fb5cd/go.mod h1:jKC1I/m+t+dhYHiugIzprRMYe4VDAJnzflZEq8Osq6g=
 github.com/cauteum/cauteum-sdk v0.1.0-alpha.2.0.20261009204546-761495582ff7 h1:I8MqWs1YoINrSMWJ5Z08lsVRmcS7QGLw19VCuCclTNQ=
 github.com/cauteum/cauteum-sdk v0.1.0-alpha.2.0.20261009204546-761495582ff7/go.mod h1:r6qDvCUDRmBLDdqkUfuqtHghOrUcIhYr04cVndI2Fq8=
-github.com/cauteum/slogx v0.1.0-alpha.2.0.20261008213740-b3c4da34847b h1:KKZ64vYzbQowRuek7QKoOQrLZ+KCDMortOWwDbSb8lg=
-github.com/cauteum/slogx v0.1.0-alpha.2.0.20261008213740-b3c4da34847b/go.mod h1:8sEfgboLQyul1bHQXrihFNK3tVZ2fAlcc/eKb0DDwW0=
+github.com/cauteum/slogx v0.1.0-beta.1 h1:MylFIK1gJzD79AsadQFnW7pUWJhWlGotuU2AZWSO+lc=
+github.com/cauteum/slogx v0.1.0-beta.1/go.mod h1:1AqivhTL1lHfJ42pHQTDnVBLcCtMcTyAVQZCglkm6KU=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
 github.com/cespare/xxhash/v2 v2.3.0/go.mod h1:VGX0DQ3Q6kWi7AoAeZDth3/j3BFtOZR5XLFGgcrjCOs=
 github.com/charmbracelet/bubbletea v1.3.10 h1:otUDHWMMzQSB0Pkc87rm691KZ3SWa4KUlvF9nRvCICw=
