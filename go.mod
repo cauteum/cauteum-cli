@@ -13,7 +13,7 @@ require (
 	github.com/cauteum/cauteum-providers v0.1.0-beta.1
 	github.com/cauteum/cauteum-proxy v0.1.0-beta.2
 	github.com/cauteum/cauteum-runtime v0.1.0-beta.2
-	github.com/cauteum/cauteum-sdk v0.1.0-alpha.2.0.20261009204546-761495582ff7
+	github.com/cauteum/cauteum-sdk v0.1.0-beta.1
 	github.com/cauteum/slogx v0.1.0-beta.1
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/lipgloss v1.1.0

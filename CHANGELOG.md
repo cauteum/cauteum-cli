@@ -12,7 +12,7 @@
 
 ### Changed
 
-- Resolve Display, Driver, Gateway, Providers, Proxy and Runtime from published beta tags; CI checks out those exact tag commits.
+- Resolve Display, Driver, Gateway, Providers, Proxy, Runtime and SDK from published beta tags; CI checks out those exact tag commits.
 - Build sandbox agent images in CI from a digest-identical public ECR mirror to avoid Docker Hub rate limits.
 - Resolve `cauteum-core` v0.1.0-beta.2 and `slogx` v0.1.0-beta.1 from published tags.
 

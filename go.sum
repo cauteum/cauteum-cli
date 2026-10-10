@@ -18,8 +18,8 @@ github.com/cauteum/cauteum-proxy v0.1.0-beta.2 h1:RHLGXlOoIOh0HtJPPnfe6t2CSDSQoX
 github.com/cauteum/cauteum-proxy v0.1.0-beta.2/go.mod h1:lDwNgQO7E0loaDbFn9M8fuqOYsQEdv15HmJu1Km7KSY=
 github.com/cauteum/cauteum-runtime v0.1.0-beta.2 h1:Qp7jaSifiDpBIjYOUuATCHIReVrUS0vUEZcYr/iiqH4=
 github.com/cauteum/cauteum-runtime v0.1.0-beta.2/go.mod h1:ywEMqDENsyuPD0FnV02sq3xrA58MYcGpQ75ovIBmYX8=
-github.com/cauteum/cauteum-sdk v0.1.0-alpha.2.0.20261009204546-761495582ff7 h1:I8MqWs1YoINrSMWJ5Z08lsVRmcS7QGLw19VCuCclTNQ=
-github.com/cauteum/cauteum-sdk v0.1.0-alpha.2.0.20261009204546-761495582ff7/go.mod h1:r6qDvCUDRmBLDdqkUfuqtHghOrUcIhYr04cVndI2Fq8=
+github.com/cauteum/cauteum-sdk v0.1.0-beta.1 h1:4CNYYuQbSzGI7mMWXxDcbB876a3VJg1q/1bZL09uMbA=
+github.com/cauteum/cauteum-sdk v0.1.0-beta.1/go.mod h1:FNAU3y3S1UfImR6bYZODeDYj2uqwVGT9eelggsQdJak=
 github.com/cauteum/slogx v0.1.0-beta.1 h1:MylFIK1gJzD79AsadQFnW7pUWJhWlGotuU2AZWSO+lc=
 github.com/cauteum/slogx v0.1.0-beta.1/go.mod h1:1AqivhTL1lHfJ42pHQTDnVBLcCtMcTyAVQZCglkm6KU=
 github.com/cespare/xxhash/v2 v2.3.0 h1:UL815xU9SqsFlibzuggzjXhog7bL6oX9BbNZnL2UFvs=
