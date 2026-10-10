@@ -16,7 +16,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing tag to rebuild (e.g. v0.1.0-alpha.1)"
+        description: "Existing tag to rebuild (e.g. v0.1.2)"
         required: false
 
 permissions:
@@ -37,15 +37,15 @@ jobs:
         run: |
           set -euo pipefail
           declare -A MODULES=(
-            [cauteum-core]=cauteum-haven/cauteum-core@v0.1.0-beta.2
-            [cauteum-display]=cauteum-haven/cauteum-display@v0.1.0-beta.1
-            [cauteum-driver]=cauteum-haven/cauteum-driver@v0.1.0-beta.2
-            [cauteum-providers]=cauteum-haven/cauteum-providers@v0.1.0-beta.1
-            [cauteum-proxy]=cauteum-haven/cauteum-proxy@v0.1.0-beta.2
-            [cauteum-runtime]=cauteum-haven/cauteum-runtime@v0.1.0-beta.2
-            [cauteum-sdk]=cauteum-haven/cauteum-sdk@v0.1.0-beta.1
-            [cauteum-gateway]=cauteum-haven/cauteum-gateway@v0.1.0-beta.2
-            [slogx]=cauteum-haven/slogx@v0.1.0-beta.1
+            [cauteum-core]=cauteum-haven/cauteum-core@v0.1.2
+            [cauteum-display]=cauteum-haven/cauteum-display@v0.1.2
+            [cauteum-driver]=cauteum-haven/cauteum-driver@v0.1.2
+            [cauteum-providers]=cauteum-haven/cauteum-providers@v0.1.2
+            [cauteum-proxy]=cauteum-haven/cauteum-proxy@v0.1.2
+            [cauteum-runtime]=cauteum-haven/cauteum-runtime@v0.1.2
+            [cauteum-sdk]=cauteum-haven/cauteum-sdk@v0.1.2
+            [cauteum-gateway]=cauteum-haven/cauteum-gateway@v0.1.2
+            [slogx]=cauteum-haven/slogx@v0.1.2
           )
           for local in \
             cauteum-core cauteum-display cauteum-driver \
@@ -78,15 +78,13 @@ jobs:
               if [[ -d "$d" ]]; then
                 echo "  github.com/cauteum-haven/${d} v0.1.0-alpha.1 => ./$d"
                 echo "  github.com/cauteum-haven/${d} v0.1.0-alpha.2 => ./$d"
-                echo "  github.com/cauteum-haven/${d} v0.1.0-beta.1 => ./$d"
-                echo "  github.com/cauteum-haven/${d} v0.1.0-beta.2 => ./$d"
+                echo "  github.com/cauteum-haven/${d} v0.1.2 => ./$d"
               fi
             done
             if [[ -d slogx ]]; then
               echo '  github.com/cauteum-haven/slogx v0.1.0-alpha.1 => ./slogx'
               echo '  github.com/cauteum-haven/slogx v0.1.0-alpha.2 => ./slogx'
-              echo '  github.com/cauteum-haven/slogx v0.1.0-beta.1 => ./slogx'
-              echo '  github.com/cauteum-haven/slogx v0.1.0-beta.2 => ./slogx'
+              echo '  github.com/cauteum-haven/slogx v0.1.2 => ./slogx'
             fi
             echo ')'
           } > "${{ github.workspace }}/go.work"

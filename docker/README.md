@@ -9,7 +9,7 @@ Runtime base (`cauteum-sandbox:local` / GHCR `:cli`) is built from the [runtime 
 | [`agents/claude`](./agents/claude/) | `cauteum-sandbox:claude` | + Claude Code CLI |
 | [`agents/codex`](./agents/codex/) | `cauteum-sandbox:codex` | + OpenAI Codex CLI |
 
-Published images and BYOC: [image reference](https://cauteum.github.io/reference/images/).
+Published images and BYOC: [image reference](https://cauteum-haven.github.io/reference/images/).
 
 ## Build
 

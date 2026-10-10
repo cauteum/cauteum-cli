@@ -4,8 +4,8 @@ Goal: an agent **inside** the sandbox can `git push` / `gh` to your org.
 The host only seeds the token once; the guest sees `cauteum:resolve:env:GITHUB_TOKEN`,
 and the sidecar rewrites it on egress.
 
-**Общий запуск + create:** [профили провайдеров](https://cauteum.github.io/ru/guides/provider-profiles/).  
-**Cursor+Git:** [Docker](https://cauteum.github.io/ru/providers/docker/).
+**Общий запуск + create:** [профили провайдеров](https://cauteum-haven.github.io/ru/guides/provider-profiles/).  
+**Cursor+Git:** [Docker](https://cauteum-haven.github.io/ru/providers/docker/).
 
 ## Prerequisites
 

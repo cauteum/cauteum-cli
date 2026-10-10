@@ -114,6 +114,7 @@ jobs:
                 echo "  github.com/cauteum-haven/${d} v0.1.0-alpha.2 => ./$d"
                 echo "  github.com/cauteum-haven/${d} v0.1.0-beta.1 => ./$d"
                 echo "  github.com/cauteum-haven/${d} v0.1.0-beta.2 => ./$d"
+                echo "  github.com/cauteum-haven/${d} v0.1.2 => ./$d"
               fi
             done
             if [[ -d slogx ]]; then
@@ -121,6 +122,7 @@ jobs:
               echo '  github.com/cauteum-haven/slogx v0.1.0-alpha.2 => ./slogx'
               echo '  github.com/cauteum-haven/slogx v0.1.0-beta.1 => ./slogx'
               echo '  github.com/cauteum-haven/slogx v0.1.0-beta.2 => ./slogx'
+              echo '  github.com/cauteum-haven/slogx v0.1.2 => ./slogx'
             fi
             echo ')'
           } > "${{ github.workspace }}/go.work"
@@ -239,6 +241,7 @@ jobs:
                 echo "  github.com/cauteum-haven/${d} v0.1.0-alpha.2 => ./$d"
                 echo "  github.com/cauteum-haven/${d} v0.1.0-beta.1 => ./$d"
                 echo "  github.com/cauteum-haven/${d} v0.1.0-beta.2 => ./$d"
+                echo "  github.com/cauteum-haven/${d} v0.1.2 => ./$d"
               fi
             done
             if [[ -d slogx ]]; then
@@ -246,6 +249,7 @@ jobs:
               echo '  github.com/cauteum-haven/slogx v0.1.0-alpha.2 => ./slogx'
               echo '  github.com/cauteum-haven/slogx v0.1.0-beta.1 => ./slogx'
               echo '  github.com/cauteum-haven/slogx v0.1.0-beta.2 => ./slogx'
+              echo '  github.com/cauteum-haven/slogx v0.1.2 => ./slogx'
             fi
             echo ')'
           } > "${{ github.workspace }}/go.work"
@@ -364,6 +368,7 @@ jobs:
                 echo "  github.com/cauteum-haven/${d} v0.1.0-alpha.2 => ./$d"
                 echo "  github.com/cauteum-haven/${d} v0.1.0-beta.1 => ./$d"
                 echo "  github.com/cauteum-haven/${d} v0.1.0-beta.2 => ./$d"
+                echo "  github.com/cauteum-haven/${d} v0.1.2 => ./$d"
               fi
             done
             if [[ -d slogx ]]; then
@@ -371,6 +376,7 @@ jobs:
               echo '  github.com/cauteum-haven/slogx v0.1.0-alpha.2 => ./slogx'
               echo '  github.com/cauteum-haven/slogx v0.1.0-beta.1 => ./slogx'
               echo '  github.com/cauteum-haven/slogx v0.1.0-beta.2 => ./slogx'
+              echo '  github.com/cauteum-haven/slogx v0.1.2 => ./slogx'
             fi
             echo ')'
           } > "${{ github.workspace }}/go.work"
@@ -487,6 +493,7 @@ jobs:
                 echo "  github.com/cauteum-haven/${d} v0.1.0-alpha.2 => ./$d"
                 echo "  github.com/cauteum-haven/${d} v0.1.0-beta.1 => ./$d"
                 echo "  github.com/cauteum-haven/${d} v0.1.0-beta.2 => ./$d"
+                echo "  github.com/cauteum-haven/${d} v0.1.2 => ./$d"
               fi
             done
             if [[ -d slogx ]]; then
@@ -494,6 +501,7 @@ jobs:
               echo '  github.com/cauteum-haven/slogx v0.1.0-alpha.2 => ./slogx'
               echo '  github.com/cauteum-haven/slogx v0.1.0-beta.1 => ./slogx'
               echo '  github.com/cauteum-haven/slogx v0.1.0-beta.2 => ./slogx'
+              echo '  github.com/cauteum-haven/slogx v0.1.2 => ./slogx'
             fi
             echo ')'
           } > "${{ github.workspace }}/go.work"
@@ -579,16 +587,16 @@ jobs:
         run: |
           set -euo pipefail
           declare -A MODULES=(
-            [cauteum-core]=v0.1.0-beta.2
-            [cauteum-display]=v0.1.0-beta.1
-            [cauteum-providers]=v0.1.0-beta.1
-            [cauteum-proxy]=v0.1.0-beta.2
+            [cauteum-core]=v0.1.2
+            [cauteum-display]=v0.1.2
+            [cauteum-providers]=v0.1.2
+            [cauteum-proxy]=v0.1.2
           )
           for m in cauteum-core cauteum-display cauteum-providers cauteum-proxy; do
             git clone --depth 1 --branch "${MODULES[$m]}" \
               "https://github.com/cauteum-haven/${m}.git" "${m}"
           done
-          git clone --depth 1 --branch v0.1.0-beta.1 \
+          git clone --depth 1 --branch v0.1.2 \
             https://github.com/cauteum-haven/slogx.git slogx
 
       - name: Write go.work
@@ -605,11 +613,13 @@ jobs:
             for d in cauteum-*; do echo "  github.com/cauteum-haven/${d} v0.1.0-alpha.1 => ./$d"; done
             for d in cauteum-*; do echo "  github.com/cauteum-haven/${d} v0.1.0-alpha.2 => ./$d"; done
             for d in cauteum-*; do echo "  github.com/cauteum-haven/${d} v0.1.0-beta.1 => ./$d"; done
-            for d in cauteum-*; do echo "  github.com/cauteum-haven/${d} v0.1.0-beta.2 => ./$d"; done
+            for d in cauteum-*; do echo "  github.com/cauteum-haven/${d} v0.1.0-beta.2 => ./$d"
+                echo "  github.com/cauteum-haven/${d} v0.1.2 => ./$d"; done
             echo '  github.com/cauteum-haven/slogx v0.1.0-alpha.1 => ./slogx'
             echo '  github.com/cauteum-haven/slogx v0.1.0-alpha.2 => ./slogx'
             echo '  github.com/cauteum-haven/slogx v0.1.0-beta.1 => ./slogx'
             echo '  github.com/cauteum-haven/slogx v0.1.0-beta.2 => ./slogx'
+              echo '  github.com/cauteum-haven/slogx v0.1.2 => ./slogx'
             echo ')'
           } > go.work
 

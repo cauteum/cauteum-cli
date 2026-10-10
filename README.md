@@ -7,7 +7,7 @@
 <p align="center">
   <a href="https://github.com/cauteum-haven/cauteum-cli/actions/workflows/ci.yml"><img src="https://github.com/cauteum-haven/cauteum-cli/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
   <a href="https://github.com/cauteum-haven/cauteum-cli/releases"><img src="https://img.shields.io/github/v/release/cauteum-haven/cauteum-cli?include_prereleases&sort=semver&label=release" alt="release"></a>
-  <a href="https://img.shields.io/badge/status-beta-blueviolet"><img src="https://img.shields.io/badge/status-beta-blueviolet" alt="beta"></a>
+  <a href="https://img.shields.io/badge/status-v0.1.2-blue"><img src="https://img.shields.io/badge/status-v0.1.2-blue" alt="v0.1.2"></a>
   <a href="https://www.apache.org/licenses/LICENSE-2.0"><img src="https://img.shields.io/badge/License-Apache--2.0-blue.svg" alt="License"></a>
   <a href="https://github.com/cauteum-haven/cauteum-cli"><img src="https://img.shields.io/badge/Go-1.27+-00ADD8?logo=go" alt="Go Version"></a>
 </p>
@@ -19,7 +19,7 @@
 
 ## Overview
 
-The [quick start](https://cauteum.github.io/get-started/) contains the supported installation and first-sandbox flow.
+The [quick start](https://cauteum-haven.github.io/get-started/) contains the supported installation and first-sandbox flow.
 
 **cauteum-cli** is the user-facing `cauteum` binary for the cauteum ecosystem: sandbox lifecycle, policy checks, provider attach, gateway selection, live logs, and agent images.
 
@@ -38,11 +38,11 @@ The [quick start](https://cauteum.github.io/get-started/) contains the supported
 
 ## Installation
 
-Install the current beta (`v0.1.0-beta.2`) into `~/.local/bin`:
+Install the current release (`v0.1.2`) into `~/.local/bin`:
 
 ```bash
 curl -LsSf https://raw.githubusercontent.com/cauteum-haven/cauteum-cli/main/install.sh \
-  | CAUTEUM_VERSION=v0.1.0-beta.2 sh
+  | CAUTEUM_VERSION=v0.1.2 sh
 ```
 
 From source in the [multi-repo workspace](https://github.com/cauteum-haven):
@@ -55,7 +55,7 @@ go build -C cauteum-cli -o ../cauteum-console ./cmd/cauteum-console
 
 **Requirements:** Docker or Podman. Go 1.27+ only if building from source.
 
-`v0.1.0-beta.2` is a GitHub prerelease. It builds from published module dependencies; OpenShell behavioral compatibility remains partial. See [development and releases](https://cauteum.github.io/reference/development/) and the [compatibility status](https://cauteum.github.io/reference/openshell-compatibility/).
+`v0.1.2` is the current stable numbered release. It builds from published module dependencies; OpenShell behavioral compatibility remains partial. See [development and releases](https://cauteum-haven.github.io/reference/development/) and the [compatibility status](https://cauteum-haven.github.io/reference/openshell-compatibility/).
 
 ---
 

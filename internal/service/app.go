@@ -2478,7 +2478,7 @@ func (a *App) AgentLogin(name string) error {
 			return fmt.Errorf("agent login: set at least one of %s", strings.Join(keys, ", "))
 		}
 		fmt.Println("ok: use --provider cursor (and --provider github if needed) on sandbox create")
-		fmt.Println("docs: https://cauteum.github.io/guides/cursor/")
+		fmt.Println("docs: https://cauteum-haven.github.io/guides/cursor/")
 		return nil
 	default:
 		return fmt.Errorf("agent login: unknown agent %q (supported: cursor)", name)
