@@ -51,7 +51,7 @@ jobs:
             [cauteum-runtime]=cauteum-haven/cauteum-runtime@v0.1.4
             [cauteum-sdk]=cauteum-haven/cauteum-sdk@v0.1.4
             [cauteum-gateway]=cauteum-haven/cauteum-gateway@v0.1.4
-            [slogx]=cauteum-haven/slogx@v0.1.4
+            [slogx]=cauteum-haven/slogx@v0.1.2
           )
           for local in \
             cauteum-core cauteum-display cauteum-driver \
@@ -90,7 +90,7 @@ jobs:
             if [[ -d slogx ]]; then
               echo '  github.com/cauteum-haven/slogx v0.1.0-alpha.1 => ./slogx'
               echo '  github.com/cauteum-haven/slogx v0.1.0-alpha.2 => ./slogx'
-              echo '  github.com/cauteum-haven/slogx v0.1.4 => ./slogx'
+              echo '  github.com/cauteum-haven/slogx v0.1.2 => ./slogx'
             fi
             echo ')'
           } > "${{ github.workspace }}/go.work"
