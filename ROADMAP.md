@@ -1,12 +1,12 @@
 # Roadmap — cauteum-cli
 
-Status: **v0.1.0-beta.2** (beta) · Depends on core / driver / proxy / runtime `v0.1.0-beta.1`; display / providers / SDK / slogx remain at `v0.1.0-alpha.2`
+Status: **v0.1.4** (stable numbered release) · Depends on core / driver / proxy / runtime / display / providers / SDK `v0.1.4`; slogx `v0.1.2`
 
 ## This module
 
 | ID | Item | Notes |
 |----|------|-------|
-| L1 | **Packaging** | Homebrew / snap / installable artifacts (hub R6) |
+| L1 | **Packaging** | Homebrew / snap / installable artifacts |
 | L2 | **Agent images** | Keep cursor/claude/codex GHCR publish green |
 | L3 | **Observability UX** | TUI + live logs polish |
 | L4 | **Driver flags** | Surface k8s/vm when drivers leave stub |

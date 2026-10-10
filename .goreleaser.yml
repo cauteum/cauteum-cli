@@ -127,7 +127,7 @@ release:
     curl -LsSf https://raw.githubusercontent.com/cauteum-haven/cauteum-cli/main/install.sh | CAUTEUM_VERSION={{ .Tag }} sh
     ```
 
-    **Alpha / pre-release:** APIs may change. See VERSIONING.md in the org hub.
+    **Alpha / pre-release:** APIs may change. See the development and release guide at cauteum-haven.github.io/reference/development/.
 
 snapshot:
   version_template: "{{ .Version }}-next"
