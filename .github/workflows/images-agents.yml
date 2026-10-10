@@ -1,0 +1,163 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 the cauteum authors
+# SPDX-License-Identifier: Apache-2.0
+name: images-agents
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+    paths:
+      - "docker/agents/**"
+      - ".github/workflows/images-agents.yml"
+  pull_request:
+    paths:
+      - "docker/agents/**"
+      - ".github/workflows/images-agents.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/cauteum/cauteum/sandboxes
+  # Local tag only — GHCR base is private to cauteum-runtime; buildx container
+  # driver cannot pull it. Always build FROM a local docker-tagged base.
+  LOCAL_BASE: cauteum-sandbox:base
+  GOWORK: ${{ github.workspace }}/go.work
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        agent: [cursor, claude, codex]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: cauteum-cli
+      - name: Checkout cauteum-runtime
+        uses: actions/checkout@v4
+        with:
+          repository: cauteum/cauteum-runtime
+          path: cauteum-runtime
+          ref: c965139e3cb4b169c2e0e723f4d6fd3d7e9d9e0f
+      - name: Checkout cauteum-core
+        uses: actions/checkout@v4
+        with:
+          repository: cauteum/cauteum-core
+          path: cauteum-core
+          ref: 9b32ff965beffcaadaa6361630b9d821370a564c
+      - name: Checkout cauteum-driver
+        uses: actions/checkout@v4
+        with:
+          repository: cauteum/cauteum-driver
+          path: cauteum-driver
+          ref: d244c3ac7e41631bbdcd44908829c93181634d49
+      - name: Checkout cauteum-proxy
+        uses: actions/checkout@v4
+        with:
+          repository: cauteum/cauteum-proxy
+          path: cauteum-proxy
+          ref: e0620208414a87b38d8f4420a9ceed73e6a02466
+
+      - name: Checkout slogx
+        uses: actions/checkout@v4
+        with:
+          repository: cauteum/slogx
+          path: slogx
+      - name: Write go.work
+        working-directory: ${{ github.workspace }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > "${{ github.workspace }}/go.work" <<'EOF'
+          go 1.27.0
+          use (
+            ./cauteum-runtime
+            ./cauteum-core
+            ./cauteum-driver
+            ./cauteum-proxy
+            ./slogx
+          )
+          replace (
+            github.com/cauteum/cauteum-runtime v0.1.0-alpha.1 => ./cauteum-runtime
+            github.com/cauteum/cauteum-runtime v0.1.0-alpha.2 => ./cauteum-runtime
+            github.com/cauteum/cauteum-runtime v0.1.0-beta.1 => ./cauteum-runtime
+            github.com/cauteum/cauteum-runtime v0.1.0-beta.2 => ./cauteum-runtime
+            github.com/cauteum/cauteum-core v0.1.0-alpha.1 => ./cauteum-core
+            github.com/cauteum/cauteum-core v0.1.0-alpha.2 => ./cauteum-core
+            github.com/cauteum/cauteum-core v0.1.0-beta.1 => ./cauteum-core
+            github.com/cauteum/cauteum-core v0.1.0-beta.2 => ./cauteum-core
+            github.com/cauteum/cauteum-driver v0.1.0-alpha.1 => ./cauteum-driver
+            github.com/cauteum/cauteum-driver v0.1.0-alpha.2 => ./cauteum-driver
+            github.com/cauteum/cauteum-driver v0.1.0-beta.1 => ./cauteum-driver
+            github.com/cauteum/cauteum-driver v0.1.0-beta.2 => ./cauteum-driver
+            github.com/cauteum/cauteum-proxy v0.1.0-alpha.1 => ./cauteum-proxy
+            github.com/cauteum/cauteum-proxy v0.1.0-alpha.2 => ./cauteum-proxy
+            github.com/cauteum/cauteum-proxy v0.1.0-beta.1 => ./cauteum-proxy
+            github.com/cauteum/cauteum-proxy v0.1.0-beta.2 => ./cauteum-proxy
+            github.com/cauteum/slogx v0.1.0-alpha.1 => ./slogx
+            github.com/cauteum/slogx v0.1.0-alpha.2 => ./slogx
+            github.com/cauteum/slogx v0.1.0-beta.1 => ./slogx
+            github.com/cauteum/slogx v0.1.0-beta.2 => ./slogx
+          )
+          EOF
+          # strip leading spaces from heredoc body
+          sed -i 's/^          //' "${{ github.workspace }}/go.work"
+          cat "${{ github.workspace }}/go.work"
+
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27.2"
+          cache: true
+          cache-dependency-path: |
+            cauteum-*/go.sum
+            slogx/go.sum
+      # docker driver sees locally tagged images (container driver cannot).
+      - uses: docker/setup-buildx-action@v3
+        with:
+          driver: docker
+      - name: Login GHCR
+        if: github.event_name != 'pull_request'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build local base
+        working-directory: ${{ github.workspace }}
+        shell: bash
+        env:
+          GOWORK: ${{ github.workspace }}/go.work
+        run: |
+          set -euo pipefail
+          CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -C cauteum-runtime -o images/sandbox/cauteum-init ./cmd/cauteum-init
+          docker build -t "${LOCAL_BASE}" --target cli \
+            --build-arg DEBIAN_BASE=public.ecr.aws/docker/library/debian:bookworm@sha256:2c037a04925515fdd6ea85ea14a682d0e79931f5e9f5d07b6dbfc6ba12f9e858 \
+            -f cauteum-runtime/images/sandbox/Dockerfile \
+            cauteum-runtime/images/sandbox
+      - name: Meta
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_PREFIX }}/${{ matrix.agent }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value=main,enable={{is_default_branch}}
+            type=sha
+            type=semver,pattern={{version}}
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: cauteum-cli/docker/agents/${{ matrix.agent }}
+          file: cauteum-cli/docker/agents/${{ matrix.agent }}/Dockerfile
+          platforms: linux/amd64
+          push: ${{ github.event_name != 'pull_request' }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            BASE_IMAGE=${{ env.LOCAL_BASE }}

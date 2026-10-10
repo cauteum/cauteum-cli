@@ -1,0 +1,160 @@
+package service
+
+import (
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+
+	"github.com/cauteum/cauteum-cli/internal/global"
+	"github.com/cauteum/cauteum-cli/internal/storage/gwconfig"
+	"github.com/cauteum/cauteum-core/defaults"
+	"github.com/cauteum/cauteum-sdk/go/cauteum"
+)
+
+var errNoCurrentGateway = errors.New("no current gateway; run: cauteum gateway add|select")
+
+// ApplyGlobal stores OpenShell-style global flags for this CLI session.
+func (a *App) ApplyGlobal(g global.Context) {
+	if g.Output != "" {
+		a.OutputFormat = g.Output
+	}
+	if g.Workspace != "" {
+		a.GlobalWorkspace = g.Workspace
+	}
+	a.GatewayURLOverride = strings.TrimSpace(g.GatewayURL)
+	a.GatewayNameOverride = strings.TrimSpace(g.GatewayName)
+}
+
+func looksLikeGatewayURL(s string) bool {
+	s = strings.TrimSpace(s)
+	return strings.Contains(s, "://") || strings.HasPrefix(s, "127.") || strings.HasPrefix(s, "localhost")
+}
+
+// currentGatewayURL resolves the active gateway endpoint.
+// Order: App URL override, OPENSHELL_GATEWAY/CAUTEUM_GATEWAY_URL, -g name, config current.
+func (a *App) currentGatewayURL() (string, error) {
+	if a != nil && a.GatewayURLOverride != "" {
+		return strings.TrimRight(a.GatewayURLOverride, "/"), nil
+	}
+	if v := firstNonEmptyEnv("OPENSHELL_GATEWAY", "CAUTEUM_GATEWAY_URL"); v != "" {
+		if looksLikeGatewayURL(v) {
+			return strings.TrimRight(v, "/"), nil
+		}
+		cfg, _, err := gwconfig.Load()
+		if err != nil {
+			return "", err
+		}
+		if g, ok := cfg.Gateways[v]; ok && g.URL != "" {
+			return strings.TrimRight(g.URL, "/"), nil
+		}
+		return "", fmt.Errorf("gateway %q from env not in config (cauteum gateway add)", v)
+	}
+	if a != nil && a.GatewayNameOverride != "" {
+		cfg, _, err := gwconfig.Load()
+		if err != nil {
+			return "", err
+		}
+		g, ok := cfg.Gateways[a.GatewayNameOverride]
+		if !ok || g.URL == "" {
+			return "", fmt.Errorf("gateway %q not in config", a.GatewayNameOverride)
+		}
+		return strings.TrimRight(g.URL, "/"), nil
+	}
+	cfg, _, err := gwconfig.Load()
+	if err != nil {
+		return "", err
+	}
+	u := gwconfig.CurrentURL(cfg)
+	if u == "" {
+		return "", errNoCurrentGateway
+	}
+	return strings.TrimRight(u, "/"), nil
+}
+
+// gatewayTokenForURL resolves the bearer for a gateway URL:
+// $CAUTEUM_GATEWAY_TOKEN, then the config token, then the gateway's
+// owner-only <data_dir>/auth_token (local gateways started by this CLI).
+func (a *App) gatewayTokenForURL(url string) string {
+	if v := strings.TrimSpace(os.Getenv(cauteum.EnvToken)); v != "" {
+		return v
+	}
+	url = strings.TrimRight(url, "/")
+	dataDir := ""
+	if cfg, _, err := gwconfig.Load(); err == nil {
+		for _, g := range cfg.Gateways {
+			if strings.TrimRight(g.URL, "/") != url {
+				continue
+			}
+			if tok := strings.TrimSpace(g.Token); tok != "" {
+				return tok
+			}
+			if g.DataDir != "" {
+				dataDir = g.DataDir
+			}
+		}
+	}
+	if dataDir == "" && isLocalGatewayURL(url) {
+		dataDir = defaultGatewayDataDir()
+	}
+	if dataDir == "" {
+		return ""
+	}
+	b, err := os.ReadFile(filepath.Join(dataDir, gatewayAuthTokenFile))
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(b))
+}
+
+// gatewayAuthTokenFile mirrors the gateway store.AuthTokenFile.
+const gatewayAuthTokenFile = "auth_token"
+
+func isLocalGatewayURL(u string) bool {
+	u = strings.TrimRight(u, "/")
+	return u == localGatewayURL || u == "http://localhost:"+strconv.Itoa(defaults.GatewayPort)
+}
+
+// defaultGatewayDataDir mirrors cauteum-gateway's default --data-dir.
+func defaultGatewayDataDir() string {
+	if xdg := os.Getenv("XDG_STATE_HOME"); xdg != "" {
+		return filepath.Join(xdg, "cauteum", "gateway")
+	}
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return filepath.Join(os.TempDir(), "cauteum-gateway")
+	}
+	return filepath.Join(home, ".local", "state", "cauteum", "gateway")
+}
+
+// clientFor returns an authenticated client for a gateway URL.
+func (a *App) clientFor(u string) *cauteum.Client {
+	client := cauteum.NewWithToken(u, a.gatewayTokenForURL(u))
+	client.Workspace = a.GlobalWorkspace
+	return client
+}
+
+func firstNonEmptyEnv(keys ...string) string {
+	for _, k := range keys {
+		if v := strings.TrimSpace(os.Getenv(k)); v != "" {
+			return v
+		}
+	}
+	return ""
+}
+
+func (a *App) gatewayClient() (*cauteum.Client, error) {
+	if err := a.GatewayEnsure(); err != nil {
+		return nil, err
+	}
+	u, err := a.currentGatewayURL()
+	if err != nil {
+		return nil, err
+	}
+	if u == "" {
+		return nil, fmt.Errorf("no gateway selected (cauteum gateway ensure|add|select)")
+	}
+	return a.clientFor(u), nil
+}

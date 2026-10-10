@@ -1,0 +1,194 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 the cauteum authors
+# SPDX-License-Identifier: Apache-2.0
+#
+# Manual nightly multi-arch binaries → GitHub Release tag `nightly`.
+# Kept manual so the Releases page stays focused on the latest tested beta.
+name: Nightly
+
+env:
+  CGO_ENABLED: "0"
+  GOWORK: ${{ github.workspace }}/go.work
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nightly-${{ github.repository }}
+  cancel-in-progress: true
+
+jobs:
+  nightly:
+    name: Build & publish nightly
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout cauteum-cli
+        uses: actions/checkout@v4
+        with:
+          path: cauteum-cli
+          fetch-depth: 0
+
+      - name: Checkout sibling modules
+        run: |
+          set -euo pipefail
+          declare -A REMOTES=(
+            [cauteum-core]=cauteum/cauteum-core
+            [cauteum-display]=cauteum/cauteum-display
+            [cauteum-driver]=cauteum/cauteum-driver
+            [cauteum-providers]=cauteum/cauteum-providers
+            [cauteum-proxy]=cauteum/cauteum-proxy
+            [cauteum-runtime]=cauteum/cauteum-runtime
+            [cauteum-sdk]=cauteum/cauteum-sdk
+            [cauteum-gateway]=cauteum/cauteum-gateway
+            [slogx]=cauteum/slogx
+          )
+          for local in \
+            cauteum-core cauteum-display cauteum-driver \
+            cauteum-providers cauteum-proxy cauteum-runtime \
+            cauteum-sdk cauteum-gateway slogx
+          do
+            remote="${REMOTES[$local]}"
+            if ! git clone --depth 1 --branch main \
+              "https://github.com/${remote}.git" "${local}"; then
+              git clone --depth 1 "https://github.com/${remote}.git" "${local}"
+            fi
+          done
+
+      - name: Write go.work
+        working-directory: ${{ github.workspace }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo 'go 1.27.0'
+            echo 'use ('
+            for d in cauteum-* slogx; do
+              if [[ -d "$d" ]]; then
+                echo "  ./$d"
+              fi
+            done
+            echo ')'
+            echo 'replace ('
+            for d in cauteum-*; do
+              if [[ -d "$d" ]]; then
+                echo "  github.com/cauteum/${d} v0.1.0-alpha.1 => ./$d"
+                echo "  github.com/cauteum/${d} v0.1.0-alpha.2 => ./$d"
+                echo "  github.com/cauteum/${d} v0.1.0-beta.1 => ./$d"
+                echo "  github.com/cauteum/${d} v0.1.0-beta.2 => ./$d"
+              fi
+            done
+            if [[ -d slogx ]]; then
+              echo '  github.com/cauteum/slogx v0.1.0-alpha.1 => ./slogx'
+              echo '  github.com/cauteum/slogx v0.1.0-alpha.2 => ./slogx'
+              echo '  github.com/cauteum/slogx v0.1.0-beta.1 => ./slogx'
+              echo '  github.com/cauteum/slogx v0.1.0-beta.2 => ./slogx'
+            fi
+            echo ')'
+          } > "${{ github.workspace }}/go.work"
+          echo "Wrote go.work:" && cat "${{ github.workspace }}/go.work"
+
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27.2"
+          cache: true
+          cache-dependency-path: |
+            cauteum-cli/go.sum
+            cauteum-core/go.sum
+            cauteum-runtime/go.sum
+            cauteum-gateway/go.sum
+
+      - name: Cross-compile release matrix
+        working-directory: cauteum-cli
+        run: |
+          set -euo pipefail
+          ver="0.0.0-nightly.$(date -u +%Y%m%d)+$(git rev-parse --short HEAD)"
+          echo "NIGHTLY_VERSION=${ver}" >> "$GITHUB_ENV"
+          out="${{ github.workspace }}/dist"
+          mkdir -p "$out"
+
+          archive_os() {
+            case "$1" in
+              linux) echo Linux ;;
+              darwin) echo Darwin ;;
+              windows) echo Windows ;;
+            esac
+          }
+          archive_arch() {
+            case "$1" in
+              amd64) echo x86_64 ;;
+              *) echo "$1" ;;
+            esac
+          }
+
+          helpers="${{ github.workspace }}/helpers"
+          bash scripts/build-linux-helpers.sh "$ver" "$helpers" amd64 arm64
+
+          # Same layout as GoReleaser: cauteum + libexec/cauteum/linux-<arch>/.
+          build_cli() {
+            local goos="$1" goarch="$2" ext="${3:-}"
+            local name="cauteum_$(archive_os "$goos")_$(archive_arch "$goarch")"
+            local stage="${out}/stage-${name}"
+            echo "→ ${name}"
+            mkdir -p "${stage}/libexec/cauteum"
+            GOOS="$goos" GOARCH="$goarch" go build -trimpath \
+              -ldflags="-s -w -X github.com/cauteum/cauteum-cli/internal/service.BuildVersion=${ver}" \
+              -o "${stage}/cauteum${ext}" ./cmd/cauteum
+            cp -R "${helpers}/linux-${goarch}" "${stage}/libexec/cauteum/"
+            if [[ "$goos" != "windows" && -d ../cauteum-gateway ]]; then
+              GOOS="$goos" GOARCH="$goarch" go build -C ../cauteum-gateway -trimpath -ldflags="-s -w" \
+                -o "${stage}/cauteum-gateway" ./cmd/cauteum-gateway
+            fi
+            cp install.sh "${stage}/"
+            if [[ "$goos" == "windows" ]]; then
+              (cd "$stage" && zip -qr "${out}/${name}.zip" .)
+            else
+              tar -czf "${out}/${name}.tar.gz" -C "$stage" .
+            fi
+            rm -rf "$stage"
+          }
+
+          build_cli linux amd64
+          build_cli linux arm64
+          build_cli darwin amd64
+          build_cli darwin arm64
+          build_cli windows amd64 .exe
+
+          if [[ -d ../cauteum-gateway ]]; then
+            for goos in linux darwin; do
+              for goarch in amd64 arm64; do
+                name="cauteum-gateway_$(archive_os "$goos")_$(archive_arch "$goarch")"
+                echo "→ ${name}"
+                GOOS="$goos" GOARCH="$goarch" go build -C ../cauteum-gateway -trimpath -ldflags="-s -w" \
+                  -o "${out}/cauteum-gateway" ./cmd/cauteum-gateway
+                (cd "$out" && tar -czf "${name}.tar.gz" cauteum-gateway && rm -f cauteum-gateway)
+              done
+            done
+          fi
+
+          (cd "$out" && sha256sum -- *.tar.gz *.zip | tee checksums.txt)
+          cp install.sh "$out/"
+          printf '%s\n' "$ver" > "$out/VERSION"
+
+      - name: Publish GitHub Release (nightly / prerelease)
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: nightly
+          name: "Nightly ${{ env.NIGHTLY_VERSION }}"
+          prerelease: true
+          make_latest: false
+          generate_release_notes: true
+          body: |
+            Automated nightly build from `main` (workspace modules).
+
+            **Not a stable release.** Prefer the latest tested beta for installations.
+
+            ### Install
+            ```bash
+            curl -LsSf https://raw.githubusercontent.com/cauteum/cauteum-cli/main/install.sh | CAUTEUM_VERSION=nightly sh
+            ```
+          files: dist/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

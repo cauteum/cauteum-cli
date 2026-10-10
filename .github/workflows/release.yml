@@ -1,0 +1,115 @@
+# SPDX-FileCopyrightText: Copyright (c) 2026 the cauteum authors
+# SPDX-License-Identifier: Apache-2.0
+#
+# Tagged releases via GoReleaser. Semver pre-release suffixes → GitHub prerelease
+# (prerelease: auto) — same pattern as HashiCorp / many Go corporate CLIs.
+name: Release
+
+env:
+  CGO_ENABLED: "0"
+  GOWORK: ${{ github.workspace }}/go.work
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to rebuild (e.g. v0.1.0-alpha.1)"
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: GoReleaser
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout cauteum-cli
+        uses: actions/checkout@v4
+        with:
+          path: cauteum-cli
+          fetch-depth: 0
+
+      - name: Checkout sibling modules
+        run: |
+          set -euo pipefail
+          declare -A MODULES=(
+            [cauteum-core]=cauteum/cauteum-core@v0.1.0-beta.2
+            [cauteum-display]=cauteum/cauteum-display@v0.1.0-beta.1
+            [cauteum-driver]=cauteum/cauteum-driver@v0.1.0-beta.2
+            [cauteum-providers]=cauteum/cauteum-providers@v0.1.0-beta.1
+            [cauteum-proxy]=cauteum/cauteum-proxy@v0.1.0-beta.2
+            [cauteum-runtime]=cauteum/cauteum-runtime@v0.1.0-beta.2
+            [cauteum-sdk]=cauteum/cauteum-sdk@v0.1.0-beta.1
+            [cauteum-gateway]=cauteum/cauteum-gateway@v0.1.0-beta.2
+            [slogx]=cauteum/slogx@v0.1.0-beta.1
+          )
+          for local in \
+            cauteum-core cauteum-display cauteum-driver \
+            cauteum-providers cauteum-proxy cauteum-runtime \
+            cauteum-sdk cauteum-gateway slogx
+          do
+            module="${MODULES[$local]}"
+            remote="${module%@*}"
+            ref="${module##*@}"
+            git clone --depth 1 --branch "$ref" \
+              "https://github.com/${remote}.git" "${local}"
+          done
+
+      - name: Write go.work
+        working-directory: ${{ github.workspace }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo 'go 1.27.0'
+            echo 'use ('
+            for d in cauteum-* slogx; do
+              if [[ -d "$d" ]]; then
+                echo "  ./$d"
+              fi
+            done
+            echo ')'
+            echo 'replace ('
+            for d in cauteum-*; do
+              if [[ -d "$d" ]]; then
+                echo "  github.com/cauteum/${d} v0.1.0-alpha.1 => ./$d"
+                echo "  github.com/cauteum/${d} v0.1.0-alpha.2 => ./$d"
+                echo "  github.com/cauteum/${d} v0.1.0-beta.1 => ./$d"
+                echo "  github.com/cauteum/${d} v0.1.0-beta.2 => ./$d"
+              fi
+            done
+            if [[ -d slogx ]]; then
+              echo '  github.com/cauteum/slogx v0.1.0-alpha.1 => ./slogx'
+              echo '  github.com/cauteum/slogx v0.1.0-alpha.2 => ./slogx'
+              echo '  github.com/cauteum/slogx v0.1.0-beta.1 => ./slogx'
+              echo '  github.com/cauteum/slogx v0.1.0-beta.2 => ./slogx'
+            fi
+            echo ')'
+          } > "${{ github.workspace }}/go.work"
+          echo "Wrote go.work:" && cat "${{ github.workspace }}/go.work"
+
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27.2"
+          cache: true
+          cache-dependency-path: |
+            cauteum-cli/go.sum
+            cauteum-core/go.sum
+            cauteum-gateway/go.sum
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          workdir: cauteum-cli
+          args: release --clean --verbose
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GOWORK: ${{ github.workspace }}/go.work
+          GOTOOLCHAIN: local
