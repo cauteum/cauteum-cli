@@ -631,7 +631,7 @@ jobs:
           for a in dist/cauteum_Linux_x86_64.tar.gz dist/cauteum_Darwin_arm64.tar.gz; do
             arch=amd64; [[ "$a" == *arm64* ]] && arch=arm64
             list="$(tar -tzf "$a")"
-            for f in cauteum cauteum-gateway \
+            for f in cauteum cauteum-gateway cauteum-console \
                      "libexec/cauteum/linux-${arch}/cauteum" \
                      "libexec/cauteum/linux-${arch}/cauteum-init" \
                      "libexec/cauteum/linux-${arch}/cauteum-sshd"; do
@@ -645,5 +645,6 @@ jobs:
             CAUTEUM_INSTALL_DIR=/tmp/prefix/bin sh ./install.sh
           test -x /tmp/prefix/bin/cauteum
           test -x /tmp/prefix/bin/cauteum-gateway
+          test -x /tmp/prefix/bin/cauteum-console
           test -x /tmp/prefix/libexec/cauteum/linux-amd64/cauteum-sshd
           /tmp/prefix/bin/cauteum version

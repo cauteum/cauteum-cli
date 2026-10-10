@@ -7,6 +7,7 @@
 ### Added
 
 - Add the Go server-rendered management console with OIDC PKCE, secure sessions, workspace views, sandbox details, logs and lifecycle actions.
+- Include the console binary in Linux/macOS release archives and `install.sh` layouts.
 - Add Podman capability diagnostics and live-Gateway browser smoke coverage.
 
 ### Changed

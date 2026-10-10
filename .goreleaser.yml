@@ -40,11 +40,20 @@ builds:
     ldflags:
       - -s -w
 
+  - id: cauteum-console
+    main: ./cmd/cauteum-console
+    binary: cauteum-console
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin]
+    goarch: [amd64, arm64]
+    ldflags:
+      - -s -w
+
 archives:
   - id: cli
-    # cauteum-gateway rides along (linux/darwin) so `gateway ensure` works
-    # from a plain install.sh setup.
-    ids: [cauteum, cauteum-gateway]
+    # Gateway and console ride along on Linux/macOS for a plain install.sh setup.
+    ids: [cauteum, cauteum-gateway, cauteum-console]
     # windows has no gateway build
     allow_different_binary_count: true
     name_template: >-

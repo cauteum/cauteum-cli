@@ -83,11 +83,13 @@ Only dangling anonymous test volumes and stopped containers labeled
 
 ### Browser console
 
-The Go console uses the public Go SDK and keeps OIDC tokens in server-side
-sessions. Local development can use the loopback auth bootstrap:
+The Go console ships as `cauteum-console` in Linux and macOS release archives
+and is installed by `install.sh`. It uses the public Go SDK and keeps OIDC
+tokens in server-side sessions. Local development can use the loopback auth
+bootstrap:
 
 ```bash
-./cauteum-console \
+cauteum-console \
   -listen 127.0.0.1:8080 \
   -public-url http://127.0.0.1:8080 \
   -gateway http://127.0.0.1:7443
