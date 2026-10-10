@@ -36,27 +36,27 @@ jobs:
       - name: Checkout sibling modules
         run: |
           set -euo pipefail
-          declare -A REMOTES=(
-            [cauteum-core]=cauteum/cauteum-core
-            [cauteum-display]=cauteum/cauteum-display
-            [cauteum-driver]=cauteum/cauteum-driver
-            [cauteum-providers]=cauteum/cauteum-providers
-            [cauteum-proxy]=cauteum/cauteum-proxy
-            [cauteum-runtime]=cauteum/cauteum-runtime
-            [cauteum-sdk]=cauteum/cauteum-sdk
-            [cauteum-gateway]=cauteum/cauteum-gateway
-            [slogx]=cauteum/slogx
+          declare -A MODULES=(
+            [cauteum-core]=cauteum/cauteum-core@v0.1.0-beta.2
+            [cauteum-display]=cauteum/cauteum-display@v0.1.0-beta.1
+            [cauteum-driver]=cauteum/cauteum-driver@v0.1.0-beta.2
+            [cauteum-providers]=cauteum/cauteum-providers@v0.1.0-beta.1
+            [cauteum-proxy]=cauteum/cauteum-proxy@v0.1.0-beta.2
+            [cauteum-runtime]=cauteum/cauteum-runtime@v0.1.0-beta.2
+            [cauteum-sdk]=cauteum/cauteum-sdk@v0.1.0-beta.1
+            [cauteum-gateway]=cauteum/cauteum-gateway@v0.1.0-beta.2
+            [slogx]=cauteum/slogx@v0.1.0-beta.1
           )
           for local in \
             cauteum-core cauteum-display cauteum-driver \
             cauteum-providers cauteum-proxy cauteum-runtime \
             cauteum-sdk cauteum-gateway slogx
           do
-            remote="${REMOTES[$local]}"
-            if ! git clone --depth 1 --branch main \
-              "https://github.com/${remote}.git" "${local}"; then
-              git clone --depth 1 "https://github.com/${remote}.git" "${local}"
-            fi
+            module="${MODULES[$local]}"
+            remote="${module%@*}"
+            ref="${module##*@}"
+            git clone --depth 1 --branch "$ref" \
+              "https://github.com/${remote}.git" "${local}"
           done
 
       - name: Write go.work
