@@ -1,5 +1,25 @@
 # Changelog
 
+## [Unreleased]
+
+## [v0.1.0-beta.3] - 2026-10-10
+
+### Added
+
+- Add the Go server-rendered management console with OIDC PKCE, secure sessions, workspace views, sandbox details, logs and lifecycle actions.
+- Include the console binary in Linux/macOS release archives and `install.sh` layouts.
+- Add Podman capability diagnostics and live-Gateway browser smoke coverage.
+
+### Changed
+
+- Resolve Display, Driver, Gateway, Providers, Proxy, Runtime and SDK from published beta tags; CI checks out those exact tag commits.
+- Build sandbox agent images in CI from a digest-identical public ECR mirror to avoid Docker Hub rate limits.
+- Resolve `cauteum-core` v0.1.0-beta.2 and `slogx` v0.1.0-beta.1 from published tags.
+
+### Fixed
+
+- Make provider policy test fixtures self-contained for standalone CLI consumers.
+
 ## [v0.1.0-beta.2] - 2026-10-08
 
 ### Changed

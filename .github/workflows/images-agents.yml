@@ -43,25 +43,25 @@ jobs:
         with:
           repository: cauteum/cauteum-runtime
           path: cauteum-runtime
-          ref: main
+          ref: c965139e3cb4b169c2e0e723f4d6fd3d7e9d9e0f
       - name: Checkout cauteum-core
         uses: actions/checkout@v4
         with:
           repository: cauteum/cauteum-core
           path: cauteum-core
-          ref: main
+          ref: 9b32ff965beffcaadaa6361630b9d821370a564c
       - name: Checkout cauteum-driver
         uses: actions/checkout@v4
         with:
           repository: cauteum/cauteum-driver
           path: cauteum-driver
-          ref: main
+          ref: d244c3ac7e41631bbdcd44908829c93181634d49
       - name: Checkout cauteum-proxy
         uses: actions/checkout@v4
         with:
           repository: cauteum/cauteum-proxy
           path: cauteum-proxy
-          ref: main
+          ref: e0620208414a87b38d8f4420a9ceed73e6a02466
 
       - name: Checkout slogx
         uses: actions/checkout@v4
@@ -112,7 +112,7 @@ jobs:
 
       - uses: actions/setup-go@v5
         with:
-          go-version: "1.27"
+          go-version: "1.27.2"
           cache: true
           cache-dependency-path: |
             cauteum-*/go.sum
@@ -137,6 +137,7 @@ jobs:
           set -euo pipefail
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -C cauteum-runtime -o images/sandbox/cauteum-init ./cmd/cauteum-init
           docker build -t "${LOCAL_BASE}" --target cli \
+            --build-arg DEBIAN_BASE=public.ecr.aws/docker/library/debian:bookworm@sha256:2c037a04925515fdd6ea85ea14a682d0e79931f5e9f5d07b6dbfc6ba12f9e858 \
             -f cauteum-runtime/images/sandbox/Dockerfile \
             cauteum-runtime/images/sandbox
       - name: Meta

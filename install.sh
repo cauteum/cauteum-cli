@@ -18,6 +18,7 @@
 # Layout (Homebrew-style prefix, derived from the install dir):
 #   <prefix>/bin/cauteum
 #   <prefix>/bin/cauteum-gateway            (linux / macOS; `cauteum gateway ensure`)
+#   <prefix>/bin/cauteum-console            (linux / macOS; browser management UI)
 #   <prefix>/libexec/cauteum/linux-<arch>/{cauteum,cauteum-init,cauteum-sshd}
 # The linux helpers are mounted into sandboxes and proxy sidecars, so no Go
 # toolchain, source checkout, or local image build is needed.
@@ -180,6 +181,10 @@ main() {
   if [ -f "${_tmpdir}/${APP_NAME}-gateway" ]; then
     $_sudo install -m 755 "${_tmpdir}/${APP_NAME}-gateway" "${_dir}/${APP_NAME}-gateway"
     info "gateway → ${_dir}/${APP_NAME}-gateway"
+  fi
+  if [ -f "${_tmpdir}/${APP_NAME}-console" ]; then
+    $_sudo install -m 755 "${_tmpdir}/${APP_NAME}-console" "${_dir}/${APP_NAME}-console"
+    info "console → ${_dir}/${APP_NAME}-console"
   fi
 
   _helpers_src="${_tmpdir}/libexec/cauteum"

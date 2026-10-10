@@ -196,16 +196,24 @@ func (a *App) Health() error {
 	if !p.OK {
 		return fmt.Errorf("health: %s unreachable: %s", a.DriverName, p.Error)
 	}
+	engine := strings.ToLower(strings.TrimSpace(a.DriverName))
+	if engine == "" {
+		engine = "compute"
+	}
 	fmt.Printf("health: ok\n")
 	fmt.Printf("  driver:           %s\n", a.DriverName)
-	fmt.Printf("  docker.server:    %s\n", p.ServerVersion)
-	fmt.Printf("  docker.api:       %s\n", p.APIVersion)
-	fmt.Printf("  docker.os:        %s\n", p.OperatingSystem)
-	fmt.Printf("  docker.arch:      %s\n", p.Architecture)
-	fmt.Printf("  docker.context:   %s\n", p.Context)
+	fmt.Printf("  %s.server:  %s\n", engine, p.ServerVersion)
+	fmt.Printf("  %s.api:     %s\n", engine, p.APIVersion)
+	fmt.Printf("  %s.os:      %s\n", engine, p.OperatingSystem)
+	fmt.Printf("  %s.arch:    %s\n", engine, p.Architecture)
+	fmt.Printf("  %s.context: %s\n", engine, p.Context)
 	fmt.Printf("  isolation:        %s\n", p.Isolation)
 	fmt.Printf("  host.goos:        %s\n", p.HostGOOS)
 	fmt.Printf("  capabilities:     %s\n", strings.Join(p.Capabilities, ", "))
+	if strings.EqualFold(a.DriverName, "podman") {
+		fmt.Printf("  podman.rootless:  %s\n", p.Rootless)
+		fmt.Printf("  podman.security:  %s\n", strings.Join(p.SecurityOptions, ", "))
+	}
 	probeCtx, probeCancel := a.withTimeout(TimeoutWait)
 	defer probeCancel()
 	probe := a.probeLandlock(probeCtx)
@@ -263,6 +271,12 @@ func (a *App) Doctor() error {
 	if err := a.Health(); err != nil {
 		return err
 	}
+	probeCtx, probeCancel := a.withTimeout(TimeoutAPIShort)
+	probe := a.Docker.Health(probeCtx)
+	probeCancel()
+	if err := validateDoctorEngine(a.DriverName, probe); err != nil {
+		return err
+	}
 	u, err := a.currentGatewayURL()
 	if err != nil || u == "" {
 		return fmt.Errorf("doctor: no gateway selected (cauteum gateway ensure|add|select)")
@@ -274,6 +288,10 @@ func (a *App) Doctor() error {
 	if err != nil {
 		return fmt.Errorf("doctor: gateway info: %w", err)
 	}
+	engine := strings.ToLower(strings.TrimSpace(a.DriverName))
+	if engine == "" {
+		engine = "compute"
+	}
 	if raw, ok := info["secrets_kek"].(map[string]any); ok {
 		if pinned, _ := raw["pinned"].(bool); !pinned {
 			fmt.Fprintf(os.Stderr, "doctor: warn: pin %s in compose/env so secrets survive volume loss\n", secrets.EnvKEK)
@@ -282,7 +300,9 @@ func (a *App) Doctor() error {
 			fmt.Fprintln(os.Stderr, "doctor: warn: legacy secrets store needs migration; back up the data dir and restart gateway")
 		}
 	}
-	fmt.Fprintln(os.Stderr, "doctor: note: binary-scoped egress rules deny callers whose executable cannot be verified; Docker Desktop sidecar TCP usually cannot provide this identity")
+	if strings.EqualFold(a.DriverName, "docker") {
+		fmt.Fprintln(os.Stderr, "doctor: note: binary-scoped egress rules deny callers whose executable cannot be verified; Docker Desktop sidecar TCP usually cannot provide this identity")
+	}
 	providers, err := cli.ListProviders(ctx)
 	if err != nil {
 		return fmt.Errorf("doctor: list providers: %w", err)
@@ -291,8 +311,53 @@ func (a *App) Doctor() error {
 	for _, p := range providers {
 		fmt.Printf("    - %s type=%s env=%v\n", p.Name, p.Type, p.EnvVars)
 	}
-	fmt.Printf("doctor: ok (docker path)\n")
+	fmt.Printf("doctor: ok (%s path)\n", engine)
 	return nil
+}
+
+func validateDoctorEngine(name string, probe driver.Probe) error {
+	if !probe.OK {
+		return fmt.Errorf("doctor: %s engine is unavailable: %s", name, probe.Error)
+	}
+	if !strings.EqualFold(strings.TrimSpace(name), "podman") {
+		return nil
+	}
+	major, ok := leadingVersionNumber(probe.ServerVersion)
+	if !ok {
+		return fmt.Errorf("doctor: Podman server version %q is not recognizable; run `podman version` and verify the active API socket", probe.ServerVersion)
+	}
+	if major < 6 {
+		return fmt.Errorf("doctor: Podman %s cannot enforce the host-gateway blocking route required by proxy-backed sandboxes; upgrade the selected Podman service to 6 or newer", probe.ServerVersion)
+	}
+	if !slices.Contains(probe.Capabilities, "libpod-native") || !slices.Contains(probe.Capabilities, "userns") {
+		return fmt.Errorf("doctor: Podman API lacks native network/userns capabilities; select the Podman 6 Libpod socket and retry")
+	}
+	if strings.TrimSpace(probe.Rootless) == "" {
+		return fmt.Errorf("doctor: Podman rootless mode could not be determined; check `podman info` and the selected user/system socket")
+	}
+	return nil
+}
+
+func leadingVersionNumber(version string) (int, bool) {
+	version = strings.TrimSpace(version)
+	start := -1
+	for index, char := range version {
+		if char >= '0' && char <= '9' {
+			start = index
+			break
+		}
+	}
+	if start < 0 {
+		return 0, false
+	}
+	major := 0
+	for _, char := range version[start:] {
+		if char < '0' || char > '9' {
+			break
+		}
+		major = major*10 + int(char-'0')
+	}
+	return major, major > 0
 }
 
 // CleanupDockerTestResources removes only disposable resources created by the
