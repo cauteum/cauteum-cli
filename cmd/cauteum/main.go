@@ -8,10 +8,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/cauteum/cauteum-cli/internal/app"
-	"github.com/cauteum/cauteum-cli/internal/logger"
-	"github.com/cauteum/cauteum-cli/internal/service"
-	"github.com/cauteum/slogx"
+	"github.com/cauteum-haven/cauteum-cli/internal/app"
+	"github.com/cauteum-haven/cauteum-cli/internal/logger"
+	"github.com/cauteum-haven/cauteum-cli/internal/service"
+	"github.com/cauteum-haven/slogx"
 )
 
 func main() {

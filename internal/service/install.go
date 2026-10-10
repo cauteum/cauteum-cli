@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/cauteum/cauteum-core/defaults"
+	"github.com/cauteum-haven/cauteum-core/defaults"
 )
 
 // InstallOpts for `cauteum install`.

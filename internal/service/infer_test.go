@@ -3,8 +3,8 @@ package service_test
 import (
 	"testing"
 
-	"github.com/cauteum/cauteum-cli/internal/autoprovider"
-	"github.com/cauteum/cauteum-cli/internal/service"
+	"github.com/cauteum-haven/cauteum-cli/internal/autoprovider"
+	"github.com/cauteum-haven/cauteum-cli/internal/service"
 )
 
 func TestInferProvidersFromArgv(t *testing.T) {

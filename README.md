@@ -5,14 +5,14 @@
   Create, harden, and operate policy-bound sandboxes — Cursor, Claude, Codex, and BYOC.
 </p>
 <p align="center">
-  <a href="https://github.com/cauteum/cauteum-cli/actions/workflows/ci.yml"><img src="https://github.com/cauteum/cauteum-cli/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/cauteum/cauteum-cli/releases"><img src="https://img.shields.io/github/v/release/cauteum/cauteum-cli?include_prereleases&sort=semver&label=release" alt="release"></a>
+  <a href="https://github.com/cauteum-haven/cauteum-cli/actions/workflows/ci.yml"><img src="https://github.com/cauteum-haven/cauteum-cli/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://github.com/cauteum-haven/cauteum-cli/releases"><img src="https://img.shields.io/github/v/release/cauteum-haven/cauteum-cli?include_prereleases&sort=semver&label=release" alt="release"></a>
   <a href="https://img.shields.io/badge/status-beta-blueviolet"><img src="https://img.shields.io/badge/status-beta-blueviolet" alt="beta"></a>
   <a href="https://www.apache.org/licenses/LICENSE-2.0"><img src="https://img.shields.io/badge/License-Apache--2.0-blue.svg" alt="License"></a>
-  <a href="https://github.com/cauteum/cauteum-cli"><img src="https://img.shields.io/badge/Go-1.27+-00ADD8?logo=go" alt="Go Version"></a>
+  <a href="https://github.com/cauteum-haven/cauteum-cli"><img src="https://img.shields.io/badge/Go-1.27+-00ADD8?logo=go" alt="Go Version"></a>
 </p>
 <p align="center">
-  <sub>Part of the <a href="https://github.com/cauteum">cauteum / cauteum</a> ecosystem</sub>
+  <sub>Part of the <a href="https://github.com/cauteum-haven">cauteum / cauteum</a> ecosystem</sub>
 </p>
 
 ---
@@ -41,11 +41,11 @@ The [quick start](https://cauteum.github.io/get-started/) contains the supported
 Install the current beta (`v0.1.0-beta.2`) into `~/.local/bin`:
 
 ```bash
-curl -LsSf https://raw.githubusercontent.com/cauteum/cauteum-cli/main/install.sh \
+curl -LsSf https://raw.githubusercontent.com/cauteum-haven/cauteum-cli/main/install.sh \
   | CAUTEUM_VERSION=v0.1.0-beta.2 sh
 ```
 
-From source in the [multi-repo workspace](https://github.com/cauteum):
+From source in the [multi-repo workspace](https://github.com/cauteum-haven):
 
 ```bash
 go build -C cauteum-cli -o ../cauteum ./cmd/cauteum
@@ -133,9 +133,9 @@ Runnable recipes live in [`examples/`](./examples/).
 | Resource | Link |
 |----------|------|
 | Roadmap | [ROADMAP.md](./ROADMAP.md) |
-| Organization | [https://github.com/cauteum](https://github.com/cauteum) |
-| Organization overview | [github.com/cauteum](https://github.com/cauteum) |
-| pkg.go.dev | [`github.com/cauteum/cauteum-cli`](https://pkg.go.dev/github.com/cauteum/cauteum-cli) |
+| Organization | [https://github.com/cauteum](https://github.com/cauteum-haven) |
+| Organization overview | [github.com/cauteum](https://github.com/cauteum-haven) |
+| pkg.go.dev | [`github.com/cauteum-haven/cauteum-cli`](https://pkg.go.dev/github.com/cauteum-haven/cauteum-cli) |
 
 ## License
 

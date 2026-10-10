@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cauteum/cauteum-cli/internal/storage/gwconfig"
-	display "github.com/cauteum/cauteum-display"
-	"github.com/cauteum/cauteum-runtime/idp"
+	"github.com/cauteum-haven/cauteum-cli/internal/storage/gwconfig"
+	display "github.com/cauteum-haven/cauteum-display"
+	"github.com/cauteum-haven/cauteum-runtime/idp"
 )
 
 // GatewayLoginInteractive stores a bearer token.

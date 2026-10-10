@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/cauteum/cauteum-providers/provider"
-	"github.com/cauteum/cauteum-proxy/proxy"
-	"github.com/cauteum/cauteum-sdk/go/cauteum"
+	"github.com/cauteum-haven/cauteum-providers/provider"
+	"github.com/cauteum-haven/cauteum-proxy/proxy"
+	"github.com/cauteum-haven/cauteum-sdk/go/cauteum"
 )
 
 func TestSandboxTokenGrantsPackagesAttachedProfileMetadata(t *testing.T) {

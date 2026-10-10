@@ -11,12 +11,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/cauteum/cauteum-cli/internal/outfmt"
-	"github.com/cauteum/cauteum-cli/internal/providerflags"
-	"github.com/cauteum/cauteum-cli/internal/storage/gwconfig"
-	"github.com/cauteum/cauteum-core/defaults"
-	"github.com/cauteum/cauteum-runtime/refresh"
-	"github.com/cauteum/cauteum-sdk/go/cauteum"
+	"github.com/cauteum-haven/cauteum-cli/internal/outfmt"
+	"github.com/cauteum-haven/cauteum-cli/internal/providerflags"
+	"github.com/cauteum-haven/cauteum-cli/internal/storage/gwconfig"
+	"github.com/cauteum-haven/cauteum-core/defaults"
+	"github.com/cauteum-haven/cauteum-runtime/refresh"
+	"github.com/cauteum-haven/cauteum-sdk/go/cauteum"
 )
 
 // ProviderGet prints provider metadata (no secret values).

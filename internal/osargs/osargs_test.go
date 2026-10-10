@@ -3,7 +3,7 @@ package osargs_test
 import (
 	"testing"
 
-	"github.com/cauteum/cauteum-cli/internal/osargs"
+	"github.com/cauteum-haven/cauteum-cli/internal/osargs"
 )
 
 func TestParseGatewayAddOpenShell(t *testing.T) {

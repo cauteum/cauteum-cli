@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cauteum/cauteum-cli/internal/storage/gwconfig"
+	"github.com/cauteum-haven/cauteum-cli/internal/storage/gwconfig"
 )
 
 const (

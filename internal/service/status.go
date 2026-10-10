@@ -6,8 +6,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/cauteum/cauteum-cli/internal/outfmt"
-	"github.com/cauteum/cauteum-sdk/go/cauteum"
+	"github.com/cauteum-haven/cauteum-cli/internal/outfmt"
+	"github.com/cauteum-haven/cauteum-sdk/go/cauteum"
 )
 
 // StatusSnapshot is structured status for -o json|yaml.

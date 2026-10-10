@@ -9,13 +9,13 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cauteum/cauteum-cli/internal/global"
-	"github.com/cauteum/cauteum-cli/internal/logger"
-	"github.com/cauteum/cauteum-cli/internal/osargs"
-	"github.com/cauteum/cauteum-cli/internal/providerflags"
-	"github.com/cauteum/cauteum-cli/internal/service"
-	"github.com/cauteum/cauteum-cli/internal/storage/templates"
-	tuipkg "github.com/cauteum/cauteum-cli/internal/tui"
+	"github.com/cauteum-haven/cauteum-cli/internal/global"
+	"github.com/cauteum-haven/cauteum-cli/internal/logger"
+	"github.com/cauteum-haven/cauteum-cli/internal/osargs"
+	"github.com/cauteum-haven/cauteum-cli/internal/providerflags"
+	"github.com/cauteum-haven/cauteum-cli/internal/service"
+	"github.com/cauteum-haven/cauteum-cli/internal/storage/templates"
+	tuipkg "github.com/cauteum-haven/cauteum-cli/internal/tui"
 	"golang.org/x/term"
 )
 

@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cauteum/cauteum-core/policy"
-	"github.com/cauteum/cauteum-providers/provider"
-	"github.com/cauteum/cauteum-proxy/proxy"
+	"github.com/cauteum-haven/cauteum-core/policy"
+	"github.com/cauteum-haven/cauteum-providers/provider"
+	"github.com/cauteum-haven/cauteum-proxy/proxy"
 )
 
 func TestOpenShellOpenAIProfileComposesAndRewritesMockRequest(t *testing.T) {

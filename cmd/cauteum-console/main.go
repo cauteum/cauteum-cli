@@ -10,7 +10,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/cauteum/cauteum-cli/internal/console"
+	"github.com/cauteum-haven/cauteum-cli/internal/console"
 )
 
 func main() {

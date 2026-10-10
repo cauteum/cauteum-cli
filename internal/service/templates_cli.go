@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/cauteum/cauteum-cli/internal/storage/templates"
+	"github.com/cauteum-haven/cauteum-cli/internal/storage/templates"
 )
 
 // TemplateCreate saves a local sandbox template.

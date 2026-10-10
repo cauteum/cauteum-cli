@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cauteum/cauteum-driver/driver"
+	"github.com/cauteum-haven/cauteum-driver/driver"
 )
 
 func TestValidateDoctorEnginePodmanProductionPrerequisites(t *testing.T) {

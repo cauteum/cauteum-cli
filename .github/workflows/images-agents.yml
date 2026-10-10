@@ -41,32 +41,32 @@ jobs:
       - name: Checkout cauteum-runtime
         uses: actions/checkout@v4
         with:
-          repository: cauteum/cauteum-runtime
+          repository: cauteum-haven/cauteum-runtime
           path: cauteum-runtime
           ref: c965139e3cb4b169c2e0e723f4d6fd3d7e9d9e0f
       - name: Checkout cauteum-core
         uses: actions/checkout@v4
         with:
-          repository: cauteum/cauteum-core
+          repository: cauteum-haven/cauteum-core
           path: cauteum-core
           ref: 9b32ff965beffcaadaa6361630b9d821370a564c
       - name: Checkout cauteum-driver
         uses: actions/checkout@v4
         with:
-          repository: cauteum/cauteum-driver
+          repository: cauteum-haven/cauteum-driver
           path: cauteum-driver
           ref: d244c3ac7e41631bbdcd44908829c93181634d49
       - name: Checkout cauteum-proxy
         uses: actions/checkout@v4
         with:
-          repository: cauteum/cauteum-proxy
+          repository: cauteum-haven/cauteum-proxy
           path: cauteum-proxy
           ref: e0620208414a87b38d8f4420a9ceed73e6a02466
 
       - name: Checkout slogx
         uses: actions/checkout@v4
         with:
-          repository: cauteum/slogx
+          repository: cauteum-haven/slogx
           path: slogx
       - name: Write go.work
         working-directory: ${{ github.workspace }}
@@ -83,26 +83,26 @@ jobs:
             ./slogx
           )
           replace (
-            github.com/cauteum/cauteum-runtime v0.1.0-alpha.1 => ./cauteum-runtime
-            github.com/cauteum/cauteum-runtime v0.1.0-alpha.2 => ./cauteum-runtime
-            github.com/cauteum/cauteum-runtime v0.1.0-beta.1 => ./cauteum-runtime
-            github.com/cauteum/cauteum-runtime v0.1.0-beta.2 => ./cauteum-runtime
-            github.com/cauteum/cauteum-core v0.1.0-alpha.1 => ./cauteum-core
-            github.com/cauteum/cauteum-core v0.1.0-alpha.2 => ./cauteum-core
-            github.com/cauteum/cauteum-core v0.1.0-beta.1 => ./cauteum-core
-            github.com/cauteum/cauteum-core v0.1.0-beta.2 => ./cauteum-core
-            github.com/cauteum/cauteum-driver v0.1.0-alpha.1 => ./cauteum-driver
-            github.com/cauteum/cauteum-driver v0.1.0-alpha.2 => ./cauteum-driver
-            github.com/cauteum/cauteum-driver v0.1.0-beta.1 => ./cauteum-driver
-            github.com/cauteum/cauteum-driver v0.1.0-beta.2 => ./cauteum-driver
-            github.com/cauteum/cauteum-proxy v0.1.0-alpha.1 => ./cauteum-proxy
-            github.com/cauteum/cauteum-proxy v0.1.0-alpha.2 => ./cauteum-proxy
-            github.com/cauteum/cauteum-proxy v0.1.0-beta.1 => ./cauteum-proxy
-            github.com/cauteum/cauteum-proxy v0.1.0-beta.2 => ./cauteum-proxy
-            github.com/cauteum/slogx v0.1.0-alpha.1 => ./slogx
-            github.com/cauteum/slogx v0.1.0-alpha.2 => ./slogx
-            github.com/cauteum/slogx v0.1.0-beta.1 => ./slogx
-            github.com/cauteum/slogx v0.1.0-beta.2 => ./slogx
+            github.com/cauteum-haven/cauteum-runtime v0.1.0-alpha.1 => ./cauteum-runtime
+            github.com/cauteum-haven/cauteum-runtime v0.1.0-alpha.2 => ./cauteum-runtime
+            github.com/cauteum-haven/cauteum-runtime v0.1.0-beta.1 => ./cauteum-runtime
+            github.com/cauteum-haven/cauteum-runtime v0.1.0-beta.2 => ./cauteum-runtime
+            github.com/cauteum-haven/cauteum-core v0.1.0-alpha.1 => ./cauteum-core
+            github.com/cauteum-haven/cauteum-core v0.1.0-alpha.2 => ./cauteum-core
+            github.com/cauteum-haven/cauteum-core v0.1.0-beta.1 => ./cauteum-core
+            github.com/cauteum-haven/cauteum-core v0.1.0-beta.2 => ./cauteum-core
+            github.com/cauteum-haven/cauteum-driver v0.1.0-alpha.1 => ./cauteum-driver
+            github.com/cauteum-haven/cauteum-driver v0.1.0-alpha.2 => ./cauteum-driver
+            github.com/cauteum-haven/cauteum-driver v0.1.0-beta.1 => ./cauteum-driver
+            github.com/cauteum-haven/cauteum-driver v0.1.0-beta.2 => ./cauteum-driver
+            github.com/cauteum-haven/cauteum-proxy v0.1.0-alpha.1 => ./cauteum-proxy
+            github.com/cauteum-haven/cauteum-proxy v0.1.0-alpha.2 => ./cauteum-proxy
+            github.com/cauteum-haven/cauteum-proxy v0.1.0-beta.1 => ./cauteum-proxy
+            github.com/cauteum-haven/cauteum-proxy v0.1.0-beta.2 => ./cauteum-proxy
+            github.com/cauteum-haven/slogx v0.1.0-alpha.1 => ./slogx
+            github.com/cauteum-haven/slogx v0.1.0-alpha.2 => ./slogx
+            github.com/cauteum-haven/slogx v0.1.0-beta.1 => ./slogx
+            github.com/cauteum-haven/slogx v0.1.0-beta.2 => ./slogx
           )
           EOF
           # strip leading spaces from heredoc body

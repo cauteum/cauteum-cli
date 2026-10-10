@@ -21,28 +21,28 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/cauteum/cauteum-cli/internal/autoprovider"
-	"github.com/cauteum/cauteum-cli/internal/logger"
-	"github.com/cauteum/cauteum-cli/internal/osargs"
-	"github.com/cauteum/cauteum-cli/internal/outfmt"
-	"github.com/cauteum/cauteum-cli/internal/policywait"
-	"github.com/cauteum/cauteum-cli/internal/storage/gwconfig"
-	"github.com/cauteum/cauteum-cli/internal/storage/templates"
-	"github.com/cauteum/cauteum-cli/internal/ui"
-	"github.com/cauteum/cauteum-core/defaults"
-	"github.com/cauteum/cauteum-core/engine"
-	"github.com/cauteum/cauteum-core/env"
-	"github.com/cauteum/cauteum-core/policy"
-	display "github.com/cauteum/cauteum-display"
-	"github.com/cauteum/cauteum-driver/driver"
-	_ "github.com/cauteum/cauteum-driver/driver/all"
-	"github.com/cauteum/cauteum-proxy/proxy"
-	"github.com/cauteum/cauteum-runtime/inference"
-	"github.com/cauteum/cauteum-runtime/relayclient"
-	"github.com/cauteum/cauteum-runtime/sandbox"
-	"github.com/cauteum/cauteum-runtime/secrets"
-	"github.com/cauteum/cauteum-sdk/go/cauteum"
-	"github.com/cauteum/slogx"
+	"github.com/cauteum-haven/cauteum-cli/internal/autoprovider"
+	"github.com/cauteum-haven/cauteum-cli/internal/logger"
+	"github.com/cauteum-haven/cauteum-cli/internal/osargs"
+	"github.com/cauteum-haven/cauteum-cli/internal/outfmt"
+	"github.com/cauteum-haven/cauteum-cli/internal/policywait"
+	"github.com/cauteum-haven/cauteum-cli/internal/storage/gwconfig"
+	"github.com/cauteum-haven/cauteum-cli/internal/storage/templates"
+	"github.com/cauteum-haven/cauteum-cli/internal/ui"
+	"github.com/cauteum-haven/cauteum-core/defaults"
+	"github.com/cauteum-haven/cauteum-core/engine"
+	"github.com/cauteum-haven/cauteum-core/env"
+	"github.com/cauteum-haven/cauteum-core/policy"
+	display "github.com/cauteum-haven/cauteum-display"
+	"github.com/cauteum-haven/cauteum-driver/driver"
+	_ "github.com/cauteum-haven/cauteum-driver/driver/all"
+	"github.com/cauteum-haven/cauteum-proxy/proxy"
+	"github.com/cauteum-haven/cauteum-runtime/inference"
+	"github.com/cauteum-haven/cauteum-runtime/relayclient"
+	"github.com/cauteum-haven/cauteum-runtime/sandbox"
+	"github.com/cauteum-haven/cauteum-runtime/secrets"
+	"github.com/cauteum-haven/cauteum-sdk/go/cauteum"
+	"github.com/cauteum-haven/slogx"
 	"golang.org/x/term"
 	"gopkg.in/yaml.v3"
 )
@@ -171,7 +171,7 @@ func (a *App) Banner() string {
 
 // Version reports the CLI stub version.
 // BuildVersion is set at release time:
-// -ldflags "-X github.com/cauteum/cauteum-cli/internal/service.BuildVersion=…".
+// -ldflags "-X github.com/cauteum-haven/cauteum-cli/internal/service.BuildVersion=…".
 var BuildVersion = "0.1.0-alpha.1"
 
 func (a *App) Version() string { return "cauteum " + BuildVersion }
@@ -2433,7 +2433,7 @@ func (a *App) Init(opt InitOpts) error {
 	default:
 		return fmt.Errorf("init: unknown agent %q (supported: cursor)", opt.Agent)
 	}
-	mod, err := findModuleDir("github.com/cauteum/cauteum-cli")
+	mod, err := findModuleDir("github.com/cauteum-haven/cauteum-cli")
 	if err != nil {
 		return err
 	}
@@ -2494,7 +2494,7 @@ func findModuleDir(modulePath string) (string, error) {
 		candidates = append(candidates, filepath.Dir(exe))
 	}
 	want := "module " + modulePath
-	short := strings.TrimPrefix(modulePath, "github.com/cauteum/")
+	short := strings.TrimPrefix(modulePath, "github.com/cauteum-haven/")
 	for _, start := range candidates {
 		dir := start
 		for range 8 {

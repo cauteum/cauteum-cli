@@ -8,10 +8,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/cauteum/cauteum-cli/internal/global"
-	"github.com/cauteum/cauteum-cli/internal/storage/gwconfig"
-	"github.com/cauteum/cauteum-core/defaults"
-	"github.com/cauteum/cauteum-sdk/go/cauteum"
+	"github.com/cauteum-haven/cauteum-cli/internal/global"
+	"github.com/cauteum-haven/cauteum-cli/internal/storage/gwconfig"
+	"github.com/cauteum-haven/cauteum-core/defaults"
+	"github.com/cauteum-haven/cauteum-sdk/go/cauteum"
 )
 
 var errNoCurrentGateway = errors.New("no current gateway; run: cauteum gateway add|select")

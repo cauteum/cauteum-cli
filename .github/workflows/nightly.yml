@@ -34,15 +34,15 @@ jobs:
         run: |
           set -euo pipefail
           declare -A REMOTES=(
-            [cauteum-core]=cauteum/cauteum-core
-            [cauteum-display]=cauteum/cauteum-display
-            [cauteum-driver]=cauteum/cauteum-driver
-            [cauteum-providers]=cauteum/cauteum-providers
-            [cauteum-proxy]=cauteum/cauteum-proxy
-            [cauteum-runtime]=cauteum/cauteum-runtime
-            [cauteum-sdk]=cauteum/cauteum-sdk
-            [cauteum-gateway]=cauteum/cauteum-gateway
-            [slogx]=cauteum/slogx
+            [cauteum-core]=cauteum-haven/cauteum-core
+            [cauteum-display]=cauteum-haven/cauteum-display
+            [cauteum-driver]=cauteum-haven/cauteum-driver
+            [cauteum-providers]=cauteum-haven/cauteum-providers
+            [cauteum-proxy]=cauteum-haven/cauteum-proxy
+            [cauteum-runtime]=cauteum-haven/cauteum-runtime
+            [cauteum-sdk]=cauteum-haven/cauteum-sdk
+            [cauteum-gateway]=cauteum-haven/cauteum-gateway
+            [slogx]=cauteum-haven/slogx
           )
           for local in \
             cauteum-core cauteum-display cauteum-driver \
@@ -73,17 +73,17 @@ jobs:
             echo 'replace ('
             for d in cauteum-*; do
               if [[ -d "$d" ]]; then
-                echo "  github.com/cauteum/${d} v0.1.0-alpha.1 => ./$d"
-                echo "  github.com/cauteum/${d} v0.1.0-alpha.2 => ./$d"
-                echo "  github.com/cauteum/${d} v0.1.0-beta.1 => ./$d"
-                echo "  github.com/cauteum/${d} v0.1.0-beta.2 => ./$d"
+                echo "  github.com/cauteum-haven/${d} v0.1.0-alpha.1 => ./$d"
+                echo "  github.com/cauteum-haven/${d} v0.1.0-alpha.2 => ./$d"
+                echo "  github.com/cauteum-haven/${d} v0.1.0-beta.1 => ./$d"
+                echo "  github.com/cauteum-haven/${d} v0.1.0-beta.2 => ./$d"
               fi
             done
             if [[ -d slogx ]]; then
-              echo '  github.com/cauteum/slogx v0.1.0-alpha.1 => ./slogx'
-              echo '  github.com/cauteum/slogx v0.1.0-alpha.2 => ./slogx'
-              echo '  github.com/cauteum/slogx v0.1.0-beta.1 => ./slogx'
-              echo '  github.com/cauteum/slogx v0.1.0-beta.2 => ./slogx'
+              echo '  github.com/cauteum-haven/slogx v0.1.0-alpha.1 => ./slogx'
+              echo '  github.com/cauteum-haven/slogx v0.1.0-alpha.2 => ./slogx'
+              echo '  github.com/cauteum-haven/slogx v0.1.0-beta.1 => ./slogx'
+              echo '  github.com/cauteum-haven/slogx v0.1.0-beta.2 => ./slogx'
             fi
             echo ')'
           } > "${{ github.workspace }}/go.work"
@@ -134,7 +134,7 @@ jobs:
             echo "→ ${name}"
             mkdir -p "${stage}/libexec/cauteum"
             GOOS="$goos" GOARCH="$goarch" go build -trimpath \
-              -ldflags="-s -w -X github.com/cauteum/cauteum-cli/internal/service.BuildVersion=${ver}" \
+              -ldflags="-s -w -X github.com/cauteum-haven/cauteum-cli/internal/service.BuildVersion=${ver}" \
               -o "${stage}/cauteum${ext}" ./cmd/cauteum
             cp -R "${helpers}/linux-${goarch}" "${stage}/libexec/cauteum/"
             if [[ "$goos" != "windows" && -d ../cauteum-gateway ]]; then
@@ -187,7 +187,7 @@ jobs:
 
             ### Install
             ```bash
-            curl -LsSf https://raw.githubusercontent.com/cauteum/cauteum-cli/main/install.sh | CAUTEUM_VERSION=nightly sh
+            curl -LsSf https://raw.githubusercontent.com/cauteum-haven/cauteum-cli/main/install.sh | CAUTEUM_VERSION=nightly sh
             ```
           files: dist/*
         env:
