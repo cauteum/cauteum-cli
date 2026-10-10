@@ -575,13 +575,21 @@ jobs:
           path: cauteum-sdk
           ref: a09f7d9a7b50f3068a8e96198eb6a7b5380644d3
 
-      - name: Checkout sibling modules
+      - name: Checkout sibling modules at published tags
         run: |
           set -euo pipefail
+          declare -A MODULES=(
+            [cauteum-core]=v0.1.0-beta.2
+            [cauteum-display]=v0.1.0-beta.1
+            [cauteum-providers]=v0.1.0-beta.1
+            [cauteum-proxy]=v0.1.0-beta.2
+          )
           for m in cauteum-core cauteum-display cauteum-providers cauteum-proxy; do
-            git clone --depth 1 "https://github.com/cauteum/${m}.git" "${m}"
+            git clone --depth 1 --branch "${MODULES[$m]}" \
+              "https://github.com/cauteum/${m}.git" "${m}"
           done
-          git clone --depth 1 https://github.com/cauteum/slogx.git slogx
+          git clone --depth 1 --branch v0.1.0-beta.1 \
+            https://github.com/cauteum/slogx.git slogx
 
       - name: Write go.work
         working-directory: ${{ github.workspace }}
